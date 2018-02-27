@@ -86,6 +86,7 @@ class DQN_Agent():
         # Creating epsilon greedy probabilities to sample from.
         pass
 
+
     def greedy_policy(self, q_values):
         # Creating greedy policy for test time.
         pass
@@ -132,6 +133,9 @@ def main(args):
     keras.backend.tensorflow_backend.set_session(sess)
 
     # You want to create an instance of the DQN_Agent class here, and then train / test it.
+    agent = DQN_Agent
+    agent.train()
+    agent.test(model_file='model.mdf')
 
 if __name__ == '__main__':
     main(sys.argv)
