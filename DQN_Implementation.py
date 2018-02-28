@@ -222,23 +222,25 @@ class DQN_Agent():
             states_next.append([])
             rewards.append([])
             for j in range(self.num_actions):
-                next_state, reward, is_terminal, info = envs[i].step[j]
+                next_state, reward, is_terminal, info = envs[i].step(j)
                 states_next[i].append(next_state)
                 rewards[i].append(reward)
 
         states_next = np.array(states_next)
         rewards = np.array(rewards)
 
-        q_values_next = np.zeros(shape=[self.batch_size, self.num_actions])
+        q_values_next = np.zeros(shape=[self.batch_size, self.num_actions, self.num_actions])
         for j in range(self.num_actions):
-            q_values_next[:, j] = sess.run(self.model.output, feed_dict={self.model.input: states_next[:, j]})
+            q_values_next[:, :, j] = sess.run(self.model.output, feed_dict={self.model.input: states_next[:, j, :]})
 
         actions_next_best = np.argmax(q_values_next, axis=1)
+
+        q_values_next_best = q_values_next[:, actions_next_best]
 
         rewards_next_best = rewards[:, actions_next_best]
 
 
-        rewards_node = tf.placeholder(dtype=tf.float32, shape=(self.batch_size, 1))
+        rewards_node = tf.placeholder(dtype=tf.float32, shape=(self.batch_size, self.num_actions))
 
         q_values_node = self.model.output
 
@@ -252,7 +254,7 @@ class DQN_Agent():
 
         train_op = tf.train.AdamOptimizer(0.001).minimize(loss_node)
 
-        sess.run(train_op, {rewards_node: rewards, q_values_next_node: q_values_next, self.model.input: states_current})
+        sess.run(train_op, {rewards_node: rewards, q_values_next_node: q_values_next_best, self.model.input: states_current})
 
         return
 
