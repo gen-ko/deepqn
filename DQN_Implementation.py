@@ -9,15 +9,71 @@ class QNetwork():
     # The network should take in state of the world as an input,
     # and output Q values of the actions available to the agent as the output.
 
-    def __init__(self, env):
+    def __init__(self, env, batch_size=32):
         # Define your network architecture here. It is also a good idea to define any training operations
         # and optimizers here, initialize your variables, or alternately compile your model here.
-
+        self.batch_size = batch_size
         if env.spec.id in SIMPLE_ENVS:
             # Initialize a linear function
-            self.input = tf.placeholder(dtype=tf.float32, shape=env.observation_space.shape, name='input')
+            self.input = tf.placeholder(dtype=tf.float32,
+                                        shape=(self.batch_size, env.observation_space.shape),
+                                        name='input')
             self.output = tf.layers.dense(
+                inputs=self.input,
+                units=env.action_space.n,
+                activation=None,
+                use_bias=True,
+                kernel_initializer=tf.random_uniform_initializer(),
+                bias_initializer=tf.zeros_initializer(),
+                kernel_regularizer=None,
+                bias_regularizer=None,
+                activity_regularizer=None,
+                trainable=True,
+                name='output',
+                reuse=None)
+        else:
+            # using "NCHW" format
+            self.input = tf.placeholder(dtype=tf.float32,
+                                        shape=(32, 4, 84, 84),
+                                        name="input")
+            self.h1 = tf.layers.conv2d(
+                inputs=self.input,
+                filters=16,
+                kernel_size=[8, 8],
+                strides=(4, 4),
+                padding="same",
+                activation=tf.nn.relu,
+                data_format='channels_first',
+                name='h1')
+            self.h2 = tf.layers.conv2d(
+                inputs=self.h1,
+                filters=32,
+                kernel_size=[4, 4],
+                strides=(2, 2),
+                padding="same",
+                activation=tf.nn.relu,
+                data_format='channels_first',
+                name='h2')
+
+            # dense layer automatically make the inputs flattened
+            self.h3 = tf.layers.dense(
                 inputs=self.h2,
+                units=256,
+                activation=tf.nn.relu,
+                use_bias=True,
+                kernel_initializer=None,
+                bias_initializer=tf.zeros_initializer(),
+                kernel_regularizer=None,
+                bias_regularizer=None,
+                activity_regularizer=None,
+                trainable=True,
+                name='h3',
+                reuse=None
+            )
+
+            # output layer
+            self.output = tf.layers.dense(
+                inputs=self.h3,
                 units=env.action_space.n,
                 activation=None,
                 use_bias=True,
@@ -28,62 +84,8 @@ class QNetwork():
                 activity_regularizer=None,
                 trainable=True,
                 name='output',
-                reuse=None)
-        else:
-
-
-        # using "NCHW" format
-        self.input = tf.placeholder(dtype=tf.float32, shape=(32, 4, 84, 84), name="input")
-        self.h1 = tf.layers.conv2d(
-            inputs=self.input,
-            filters=16,
-            kernel_size=[8, 8],
-            strides=(4, 4),
-            padding="same",
-            activation=tf.nn.relu,
-            data_format='channels_first',
-            name='h1')
-        self.h2 = tf.layers.conv2d(
-            inputs=self.h1,
-            filters=32,
-            kernel_size=[4, 4],
-            strides=(2, 2),
-            padding="same",
-            activation=tf.nn.relu,
-            data_format='channels_first',
-            name='h2')
-
-        # dense layer automatically make the inputs flattened
-        self.h3 = tf.layers.dense(
-            inputs=self.h2,
-            units=256,
-            activation=tf.nn.relu,
-            use_bias=True,
-            kernel_initializer=None,
-            bias_initializer=tf.zeros_initializer(),
-            kernel_regularizer=None,
-            bias_regularizer=None,
-            activity_regularizer=None,
-            trainable=True,
-            name='h3',
-            reuse=None
-        )
-
-        # output layer
-        self.output = tf.layers.dense(
-            inputs=self.h3,
-            units=env.action_space.n,
-            activation=None,
-            use_bias=True,
-            kernel_initializer=None,
-            bias_initializer=tf.zeros_initializer(),
-            kernel_regularizer=None,
-            bias_regularizer=None,
-            activity_regularizer=None,
-            trainable=True,
-            name='output',
-            reuse=None
-        )
+                reuse=None
+            )
         return
 
     def save_model_weights(self, sess):
@@ -148,40 +150,78 @@ class DQN_Agent():
     # (4) Create a function to test the Q Network's performance on the environment.
     # (5) Create a function for Experience Replay.
 
-    def __init__(self, env, epsilon=0.05, render=False):
+    def __init__(self, env, eps=0.01, render=False, batch_size=32, gamma=0.99):
 
         # Create an instance of the network itself, as well as the memory.
         # Here is also a good place to set environmental parameters,
         # as well as training parameters - number of episodes / iterations, etc.
-
-        self.model = QNetwork(env=env)
-        self.epsilon = epsilon
-
+        self.model = QNetwork(env=env, batch_size=batch_size)
+        self.eps = eps
+        self.num_actions = env.action_space.n
+        self.batch_size = batch_size
+        self.env_name = env.spec.id
+        self.gamma = gamma
         return
 
-    def epsilon_greedy_policy(self, q_values):
+    def epsilon_greedy_policy(self):
         # Creating epsilon greedy probabilities to sample from.
-        if np.random.uniform() > self.epsilon:
-            # choose the action with maximum q
-            return np.argmax(q_values)
-        else:
-            return np.random.randint(low=0, high=len(q_values))
+
+        # q_values is the node in tf graph where the Q-network outputs
+        q_values = self.model.output
 
 
-    def greedy_policy(self, q_values):
+        # decide to use deterministic or random
+        chose_random = tf.random_uniform(tf.stack([self.batch_size]),
+                                         minval=0,
+                                         maxval=1,
+                                         dtype=tf.float32) < self.eps
+
+        actions = tf.where(chose_random,
+                                      tf.random_uniform(tf.stack([self.batch_size]),
+                                                        minval=0,
+                                                        maxval=self.num_actions,
+                                                        dtype=tf.int32),
+                                      tf.argmax(q_values))
+
+        # return this operator
+        return actions
+
+    def greedy_policy(self):
         # Creating greedy policy for test time.
-        return np.argmax(q_values)
-        pass
+        q_values = self.model.output
+        return tf.argmax(q_values)
 
 
-    def train(self):
+    def train_online(self, sess):
         # In this function, we will train our network.
         # If training without experience replay_memory, then you will interact with the environment
         # in this function, while also updating your network parameters.
 
-        # If you are using a replay memory, you should interact with environment here, and store these
-        # transitions to memory, while also updating your model.
+        # reset a batch of envs
+        envs = []
+        for i in range(self.batch_size):
+            envs.append(gym.make(self.env_name))
+
+        obs = []
+        for i in range(self.batch_size):
+            obs.append(envs[i].reset())
+
+        action_node = self.epsilon_greedy_policy()
+        action_values = sess.run(action_node, feed_dict={self.model.input: obs})
+
+        rewards = []
+        for i in range(self.batch_size):
+            rewards.append(envs[i].step(action_values[i]))
+
+        # target value
+        sess.run(self.model.output, feed_dict={self.model.input: obs})
+
+        # the placeholder for rewards
+        rewards_ph = tf.placeholder(dtype=tf.float32, shape=(self.batch_size, self.num_actions), name='rewards')
+
+
         pass
+
 
     def test(self, model_file=None):
         # Evaluate the performance of your agent over 100 episodes, by calculating cummulative rewards for the 100 episodes.
@@ -207,18 +247,25 @@ def main(args):
     args = parse_arguments()
     env = gym.make(args.env)
 
+
     # Setting the session to allow growth, so it doesn't allocate all GPU memory.
     gpu_ops = tf.GPUOptions(allow_growth=True)
     config = tf.ConfigProto(gpu_options=gpu_ops)
     sess = tf.Session(config=config)
 
+    init = tf.global_variables_initializer()
+    sess.run(init)
+
+    agent = DQN_Agent(env)
+
+    agent.train(sess)
+    agent.test(model_file='model.mdf')
+
     # Setting this as the default tensorflow session.
     keras.backend.tensorflow_backend.set_session(sess)
 
     # You want to create an instance of the DQN_Agent class here, and then train / test it.
-    agent = DQN_Agent('DAMN')
-    agent.train()
-    agent.test(model_file='model.mdf')
+
 
     # Finish
     print('script concluded.')
