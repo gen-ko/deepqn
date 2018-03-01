@@ -28,7 +28,7 @@ def epsilon_greedy_policy(q, num_actions, batch_size=1 ):
 
 
 
-def main(args):
+def train():
     env = gym.make('CartPole-v0')
 
     # Setting the session to allow growth, so it doesn't allocate all GPU memory.
@@ -212,5 +212,10 @@ def main(args):
     return
 
 
+def main():
+    train()
+    return
+
+
 if __name__ == '__main__':
-    main(sys.argv)
+    main()
