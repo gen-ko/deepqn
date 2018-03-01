@@ -201,7 +201,13 @@ def main(args):
     print('discrepency: ', discrepency)
 
     # save model
+    saver = tf.train.Saver()
 
+    # Later, launch the model, initialize the variables, do some work, and save the
+    # variables to disk.
+
+    save_path = saver.save(sess, "./tmp/model_dqn_v1.ckpt")
+    print("Model saved in path: %s" % save_path)
 
     return
 
