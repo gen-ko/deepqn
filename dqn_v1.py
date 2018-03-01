@@ -82,7 +82,8 @@ def main(args):
     init = tf.global_variables_initializer()
     sess.run(init)
 
-
+    episode_num: int = 0
+    loop_counter: int = 0
     while True:
         # find the q values
         q = sess.run(fetches=q_tf,
@@ -94,7 +95,7 @@ def main(args):
         state_next, reward, is_terminal, info = env.step(action)
 
         state_next = np.array(state_next)
-        state_next = state.reshape((batch_size, state_dim))
+        state_next = state_next.reshape((batch_size, state_dim))
 
         q_next = sess.run(fetches=q_tf,
                           feed_dict={state_ph: state_next})
@@ -113,15 +114,25 @@ def main(args):
 
         # prepare the next loop
         state = state_next
+
+        discrepency = abs((target[:, action] - q[:, action])[0])
         if is_terminal:
+            episode_num += 1
             state = env.reset()
             state = np.array(state)
             state = state.reshape((batch_size, state_dim))
+            print('episode: ', episode_num, 'terminated')
+            print('loop count: ', loop_counter)
+            print('discrepency: ', discrepency)
+            loop_counter = 0
 
-        if (target[:, action] - q[:,action])[0] < stop_criteria:
+        if discrepency < stop_criteria:
             break
 
+        loop_counter += 1
+
     print('Training done')
+    print('discrepency: ', discrepency)
     return
 
 
