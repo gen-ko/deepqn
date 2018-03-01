@@ -43,8 +43,8 @@ def main(args):
 
     # build the network
     state_ph = tf.placeholder(dtype=tf.float32,
-                                      shape=(batch_size, state_dim),
-                                      name='state_current_ph')
+                              shape=(batch_size, state_dim),
+                              name='state_current_ph')
 
     state_next_ph = tf.placeholder(dtype=tf.float32,
                                    shape=(batch_size, state_dim),
