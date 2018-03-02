@@ -4,6 +4,7 @@ import tensorflow as tf
 import numpy as np
 import gym, sys, copy, argparse
 
+
 class Agent(object):
     def __init__(self):
         self.env = gym.make('CartPole-v0')
@@ -51,7 +52,6 @@ class Agent(object):
         return action
 
     def train(self):
-
         episode_num: int = 0
         cumulative_reward = 0.0
         avg_reward = 0.0
@@ -181,7 +181,6 @@ class Agent(object):
         return
 
 
-
 class DQN_v1(object):
     def __init__(self, state_dim, num_actions, learning_rate=0.0001):
         self.state_ph = tf.placeholder(dtype=tf.float32,
@@ -216,12 +215,6 @@ class DQN_v1(object):
 
         self.hard_train_op = tf.train.AdamOptimizer(0.01).minimize(self.loss)
         return
-
-
-
-
-
-
 
 
 def main():
