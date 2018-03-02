@@ -27,7 +27,7 @@ class MemoryReplayer(object):
         for i in range(self.cache_size):
             if self.env.env.state is None:
                 self.env.reset()
-            if self.env.env.steps_beyong_done is not None:
+            if self.env.env.steps_beyond_done is not None:
                 self.env.reset()
             self.s0[i] = self.env.env.state
             self.s1[i], self.r[i], _, _ = self.env.step(self.a[i])
