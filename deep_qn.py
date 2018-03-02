@@ -43,7 +43,7 @@ class DeepQN(object):
 
         self.q = tf.layers.dense(inputs=self.h,
                                  units=num_actions,
-                                 activation=tf.nn.sigmoid,
+                                 activation=None,
                                  use_bias=True,
                                  kernel_initializer=tf.random_normal_initializer(),
                                  bias_initializer=tf.zeros_initializer(),
@@ -54,17 +54,19 @@ class DeepQN(object):
 
         self.q_ = tf.layers.dense(inputs=self.h_,
                                  units=num_actions,
-                                 activation=tf.nn.sigmoid,
+                                 activation=None,
                                  name='q',
                                  trainable=False,
                                  reuse=True)
+
+        self.reduced_q_ = tf.reduce_max(self.q_, axis=1)
 
 
         a_indices = tf.stack([tf.range(tf.shape(self.a)[0], dtype=tf.int32), self.a], axis=1)
 
         self.estimate = tf.gather_nd(params=self.q, indices=a_indices)  # shape=(None, )
 
-        target = gamma * tf.reduce_max(self.q_, axis=1) + self.r
+        target = gamma * self.reduced_q_ + self.r
 
         self.target = tf.stop_gradient(target)
 

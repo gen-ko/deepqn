@@ -17,11 +17,11 @@ from tester import Tester
 
 def main():
     print(tf.__version__)
+    mr = MemoryReplayer(cache_size=300)
 
-    mr = MemoryReplayer(cache_size=50000)
-    qn = DeepQN(state_dim=mr.state_dim, num_actions=mr.num_actions, gamma=0.99, hidden_units=20)
+    qn = DeepQN(state_dim=mr.state_dim, num_actions=mr.num_actions, gamma=0.95, hidden_units=6)
 
-    learning_rate = 0.0001
+    learning_rate = 0.0005
 
     train_op = tf.train.AdamOptimizer(learning_rate).minimize(qn.loss)
 
@@ -43,18 +43,18 @@ def main():
 
 
     for i in range(1000):
-        s, s_, r, a = mr.get_batch(size=64)
+        s, s_, r, a, q_ = mr.get_batch(size=32, qn=qn, sess=sess)
 
-        sess.run(train_op, feed_dict={qn.s: s, qn.s_: s_, qn.r: r, qn.a: a})
+        sess.run(train_op, feed_dict={qn.s: s, qn.reduced_q_: q_, qn.r: r, qn.a: a})
 
         t1 = sess.run(qn.q, {qn.s: mr.s0})
         t2 = sess.run(qn.q_, {qn.s_: mr.s0})
 
 
-        with tf.variable_scope('q', reuse=True):
-            w = tf.get_variable('kernel')
+        #with tf.variable_scope('q', reuse=True):
+        #    w = tf.get_variable('kernel')
 
-        w_value = sess.run(w)
+        # w_value = sess.run(w)
 
         print('update round: ', i + 1)
         testor.run(qn, sess)
