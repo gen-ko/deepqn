@@ -8,7 +8,7 @@ class Agent:
         config = tf.ConfigProto(gpu_options=gpu_ops)
         self.sess = tf.Session(config=config)
         self.save_path = "./tmp/model_dqn_v1.ckpt"
-        self.eps = 0.9
+        self.eps = 0.05
         self.num_actions = 0
         return
 
@@ -39,3 +39,35 @@ class Agent:
 
     def test(self, render=False):
         pass
+
+class LinearDQN:
+    def __init__(self, state_dim, num_actions, learning_rate=0.0001):
+        self.state_ph = tf.placeholder(dtype=tf.float32,
+                                       shape=state_dim,
+                                       name='state_ph')
+
+        self.q_tensor = tf.layers.dense(inputs=tf.reshape(self.state_ph, shape=(1, state_dim)),
+                                        units=num_actions,
+                                        activation=None,
+                                        use_bias=True,
+                                        kernel_initializer=tf.random_normal_initializer(),
+                                        bias_initializer=tf.zeros_initializer(),
+                                        name='q',
+                                        trainable=True,
+                                        reuse=None)
+
+        self.target_ph = tf.placeholder(dtype=tf.float32,
+                                        shape=None,
+                                        name='target_ph')
+
+        self.action_ph = tf.placeholder(dtype=tf.int32,
+                                        shape=None,
+                                        name='action_ph')
+
+        self.q_selected_tensor = tf.gather(self.q_tensor, self.action_ph, axis=1, name='q_selected')
+
+        self.loss = tf.reduce_mean(tf.squared_difference(self.target_ph, self.q_selected_tensor), name='loss')
+
+        self.train_op = tf.train.AdamOptimizer(learning_rate).minimize(self.loss)
+
+        self.hard_train_op = tf.train.AdamOptimizer(0.01).minimize(self.loss)
