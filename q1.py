@@ -14,20 +14,14 @@ class LinearAgent(Agent):
         gpu_ops = tf.GPUOptions(allow_growth=True)
         config = tf.ConfigProto(gpu_options=gpu_ops)
         self.sess = tf.Session(config=config)
-
         self.num_actions = self.env.action_space.n
 
         # the dimension of a state observation
         self.state_dim = self.env.observation_space.shape[0]
-
         self.learning_rate = lr
-
         self.gamma = gamma
-
         self.eps = epsilon
-
         self.iterations = int(iter_num)
-
         self.save_path = "./tmp/model_q1_{}.ckpt".format(env_name)
 
         # instantiate the DQN
@@ -104,7 +98,7 @@ class LinearAgent(Agent):
         test_episodes = 100
 
         # instantiate the DQN
-        dqn = DQN_v1(self.state_dim, self.num_actions, self.learning_rate)
+        dqn = LinearDQN(self.state_dim, self.num_actions, self.learning_rate)
 
         # load weights
         self.load_model()
@@ -154,15 +148,19 @@ class LinearAgent(Agent):
 
 
 def main():
-    cartpole_agent = LinearAgent('CartPole-v0', 2022)
-    mountaincar_agent = LinearAgent('MountainCar-v0', 2022)
-    is_train = True
+    is_train = False
     is_test = False
+    cartpole_agent = LinearAgent('CartPole-v0', 2022)
     if is_train:
         cartpole_agent.train()
-        mountaincar_agent.train()
     if is_test:
         cartpole_agent.test(render=True)
+    is_train = True
+    is_test = True
+    mountaincar_agent = LinearAgent('MountainCar-v0', 5555, epsilon=0.4)
+    if is_train:
+        mountaincar_agent.train()
+    if is_test:
         mountaincar_agent.test(render=True)
 
 if __name__ == '__main__':
