@@ -85,10 +85,8 @@ class DQN_v1(object):
 
         self.loss_tf = tf.reduce_mean(tf.squared_difference(self.target_ph, self.qv_tf), name='loss_tf')
 
-        #self.train_op = tf.train.AdamOptimizer(learning_rate).minimize(self.loss_tf)
+        self.train_op = tf.train.AdamOptimizer(learning_rate).minimize(self.loss_tf)
 
-        self.optimizer = tf.train.RMSPropOptimizer(0.00025, 0.99, 0.0, 1e-6)
-        self.train_op = self.optimizer.minimize(self.loss_tf, global_step=tf.contrib.framework.get_global_step())
         return
 
 
@@ -115,6 +113,8 @@ def train():
     gamma = 0.99
 
     iterations: int = 1000000
+
+    update_steps = 10
 
     # instantiate the DQN
     dqn = DQN_v1(batch_size, state_dim, num_actions, learning_rate)
