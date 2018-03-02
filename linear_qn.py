@@ -16,7 +16,7 @@ class LinearQN(object):
                                  name='s1')
 
         self.a = tf.placeholder(dtype=tf.int32,
-                                shape=[None],
+                                shape=None,
                                 name='a')
 
         self.r = tf.placeholder(dtype=tf.float32,
@@ -39,9 +39,17 @@ class LinearQN(object):
                                  trainable=False,
                                  reuse=True)
 
-        self.estimate = tf.gather(self.q, self.a, axis=1)
+        # self.estimate = tf.gather(params=self.q, indices=self.a, axis=1)
 
-        self.target = tf.add(tf.scalar_mul(tf.constant(gamma), tf.reduce_max(self.q_)), self.r)
+        a_indices = tf.stack([tf.range(tf.shape(self.a)[0], dtype=tf.int32), self.a], axis=1)
+
+        self.estimate = tf.gather_nd(params=self.q, indices=a_indices)  # shape=(None, )
+
+        # self.t1 = self.q[self.a]
+
+        target = gamma * tf.reduce_max(self.q_, axis=1) + self.r
+
+        self.target = tf.stop_gradient(target)
 
         self.loss = tf.reduce_mean(tf.squared_difference(self.target, self.estimate))
         return

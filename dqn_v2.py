@@ -17,7 +17,7 @@ from tester import Tester
 def main():
     print(tf.__version__)
 
-    mr = MemoryReplayer()
+    mr = MemoryReplayer(cache_size=30000)
     qn = LinearQN(state_dim=mr.state_dim, num_actions=mr.num_actions, gamma=0.99)
 
     learning_rate = 0.0001
@@ -36,13 +36,15 @@ def main():
     testor = Tester(qn, report_interval=50)
 
     print('Pretrain test:')
-    testor.run(sess)
+    testor.run(qn, sess)
 
     for i in range(100):
         mr.run_env()
-        print('update round: ', i)
+
         sess.run(train_op, feed_dict={qn.s: mr.s0, qn.s_: mr.s1, qn.r: mr.r, qn.a: mr.a})
-        testor.run(sess)
+
+        print('update round: ', i + 1)
+        testor.run(qn, sess)
     return
 
 

@@ -11,7 +11,7 @@ class Tester(object):
         self.qn = qn
         self.report_interval = report_interval
 
-    def run(self, sess):
+    def run(self, qn, sess):
         report_counter: int = 0
         r_sum_avg = 0.0
         for epi in range(100):
@@ -20,7 +20,7 @@ class Tester(object):
             r_sum = 0.0
 
             while not is_terminal:
-                q = sess.run(self.qn.q, feed_dict={self.qn.s: [s]})
+                q = sess.run(qn.q, feed_dict={qn.s: [s]})
                 a = np.argmax(q)
                 s_, r, is_terminal, _ = self.env.step(a)
                 r_sum += r

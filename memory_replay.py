@@ -31,6 +31,12 @@ class MemoryReplayer(object):
                 self.env.reset()
             self.s0[i] = self.env.env.state
             self.s1[i], self.r[i], _, _ = self.env.step(self.a[i])
+
+        index = np.random.permutation(np.arange(0, self.cache_size))
+        self.s0 = self.s0[index]
+        self.s1 = self.s1[index]
+        self.a = self.a[index]
+        self.r = self.r[index]
         return
 
     def load_memory(self):
