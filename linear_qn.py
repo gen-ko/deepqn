@@ -34,10 +34,12 @@ class LinearQN(object):
                                  reuse=None)
 
         self.q_ = tf.layers.dense(inputs=self.s_,
-                                 units=num_actions,
-                                 name='q',
-                                 trainable=False,
-                                 reuse=True)
+                                  units=num_actions,
+                                  activation=None,
+                                  use_bias=True,
+                                  name='q',
+                                  trainable=False,
+                                  reuse=True)
 
 
         a_indices = tf.stack([tf.range(tf.shape(self.a)[0], dtype=tf.int32), self.a], axis=1)

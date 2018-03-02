@@ -43,7 +43,7 @@ class DeepQN(object):
 
         self.q = tf.layers.dense(inputs=self.h,
                                  units=num_actions,
-                                 activation=None,
+                                 activation=tf.nn.sigmoid,
                                  use_bias=True,
                                  kernel_initializer=tf.random_normal_initializer(),
                                  bias_initializer=tf.zeros_initializer(),
@@ -54,6 +54,7 @@ class DeepQN(object):
 
         self.q_ = tf.layers.dense(inputs=self.h_,
                                  units=num_actions,
+                                 activation=tf.nn.sigmoid,
                                  name='q',
                                  trainable=False,
                                  reuse=True)

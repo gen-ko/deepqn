@@ -19,7 +19,7 @@ def main():
     print(tf.__version__)
 
     mr = MemoryReplayer(cache_size=50000)
-    qn = DeepQN(state_dim=mr.state_dim, num_actions=mr.num_actions, gamma=0.99)
+    qn = DeepQN(state_dim=mr.state_dim, num_actions=mr.num_actions, gamma=0.99, hidden_units=20)
 
     learning_rate = 0.0001
 
