@@ -17,7 +17,7 @@ class MemoryReplayer(object):
         self.s0 = np.zeros(shape=(cache_size, self.state_dim), dtype=np.float32)
         self.s1 = np.zeros(shape=(cache_size, self.state_dim), dtype=np.float32)
         self.r  = np.zeros(shape=(cache_size, ), dtype=np.float32)
-        self.a  = np.zeros(shape=(cache_size, ), dtype=np.int32d)
+        self.a  = np.zeros(shape=(cache_size, ), dtype=np.int32)
         self.run_env()
         return
 
