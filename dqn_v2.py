@@ -17,7 +17,7 @@ from tester import Tester
 
 def main():
     print(tf.__version__)
-    mr = MemoryReplayer(cache_size=300)
+    mr = MemoryReplayer(cache_size=300, eps=0.5, gamma=0.95)
 
     qn = DeepQN(state_dim=mr.state_dim, num_actions=mr.num_actions, gamma=0.95, hidden_units=6)
 
