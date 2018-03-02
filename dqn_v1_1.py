@@ -249,7 +249,7 @@ def main():
     print(tf.__version__)
     agent = Agent()
     is_train = True
-    is_test = False
+    is_test = True
     if is_train:
         agent.train()
     if is_test:
