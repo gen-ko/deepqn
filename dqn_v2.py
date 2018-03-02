@@ -6,6 +6,7 @@ import gym, sys, copy, argparse
 
 from memory_replay import MemoryReplayer
 from linear_qn import LinearQN
+from deep_qn import DeepQN
 from tester import Tester
 
 
@@ -17,8 +18,8 @@ from tester import Tester
 def main():
     print(tf.__version__)
 
-    mr = MemoryReplayer(cache_size=30000)
-    qn = LinearQN(state_dim=mr.state_dim, num_actions=mr.num_actions, gamma=0.99)
+    mr = MemoryReplayer(cache_size=50000)
+    qn = DeepQN(state_dim=mr.state_dim, num_actions=mr.num_actions, gamma=0.99)
 
     learning_rate = 0.0001
 
@@ -33,15 +34,27 @@ def main():
     init = tf.global_variables_initializer()
     sess.run(init)
 
-    testor = Tester(qn, report_interval=50)
+    testor = Tester(qn, report_interval=100)
 
     print('Pretrain test:')
     testor.run(qn, sess)
 
-    for i in range(100):
-        mr.run_env()
 
-        sess.run(train_op, feed_dict={qn.s: mr.s0, qn.s_: mr.s1, qn.r: mr.r, qn.a: mr.a})
+
+
+    for i in range(1000):
+        s, s_, r, a = mr.get_batch(size=64)
+
+        sess.run(train_op, feed_dict={qn.s: s, qn.s_: s_, qn.r: r, qn.a: a})
+
+        t1 = sess.run(qn.q, {qn.s: mr.s0})
+        t2 = sess.run(qn.q_, {qn.s_: mr.s0})
+
+
+        with tf.variable_scope('q', reuse=True):
+            w = tf.get_variable('kernel')
+
+        w_value = sess.run(w)
 
         print('update round: ', i + 1)
         testor.run(qn, sess)
