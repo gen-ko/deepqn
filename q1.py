@@ -1,7 +1,8 @@
 import tensorflow as tf
 import numpy as np
 import gym
-from model import *
+from agent import *
+from linear_qn import *
 
 class LinearAgent(Agent):
     def __init__(self, env_name, seed, lr=0.0001, epsilon=0.05, gamma=0.9, iter_num=20000):
@@ -14,24 +15,18 @@ class LinearAgent(Agent):
         gpu_ops = tf.GPUOptions(allow_growth=True)
         config = tf.ConfigProto(gpu_options=gpu_ops)
         self.sess = tf.Session(config=config)
-
         self.num_actions = self.env.action_space.n
 
         # the dimension of a state observation
         self.state_dim = self.env.observation_space.shape[0]
-
         self.learning_rate = lr
-
         self.gamma = gamma
-
         self.eps = epsilon
-
         self.iterations = int(iter_num)
-
         self.save_path = "./tmp/model_q1_{}.ckpt".format(env_name)
 
-        # instantiate the DQN
-        self.dqn = LinearDQN(self.state_dim, self.num_actions, self.learning_rate)
+        # instantiate the QN
+        self.dqn = LinearQN(self.state_dim, self.num_actions, self.gamma)
 
         # initialize tf graph
         init = tf.global_variables_initializer()
@@ -48,8 +43,8 @@ class LinearAgent(Agent):
         print("{} starts training...".format(self.env_name))
         for iter_i in range(self.iterations):
 
-            q = self.sess.run(fetches=self.dqn.q_tensor,
-                              feed_dict={self.dqn.state_ph: state})
+            q = self.sess.run(fetches=self.dqn.q,
+                              feed_dict={self.dqn.s: state})
 
             action = self.epsilon_greedy_policy(q)
 
@@ -57,18 +52,20 @@ class LinearAgent(Agent):
 
             cumulative_reward = cumulative_reward + reward
 
-            q_next = self.sess.run(fetches=self.dqn.q_tensor,
-                                   feed_dict={self.dqn.state_ph: state_next})
+            q_next = self.sess.run(fetches=self.dqn.q,
+                                   feed_dict={self.dqn.s: state_next})
 
             # optimal action
             q_next_max = max(max(q_next))
 
             target = self.gamma * q_next_max + reward
 
-            self.sess.run(fetches=self.dqn.train_op,
-                          feed_dict={self.dqn.target_ph: target,
-                                     self.dqn.state_ph: state,
-                                     self.dqn.action_ph: action})
+            obj = tf.train.AdamOptimizer(self.learning_rate).minimize(self.dqn.loss)
+
+            self.sess.run(fetches=obj,
+                          feed_dict={self.dqn.target: target,
+                                     self.dqn.s: state,
+                                     self.dqn.a: action})
 
             # prepare the next loop
             state = state_next
@@ -104,7 +101,7 @@ class LinearAgent(Agent):
         test_episodes = 100
 
         # instantiate the DQN
-        dqn = DQN_v1(self.state_dim, self.num_actions, self.learning_rate)
+        dqn = LinearQN(self.state_dim, self.num_actions, self.learning_rate)
 
         # load weights
         self.load_model()
@@ -126,8 +123,8 @@ class LinearAgent(Agent):
                 if render:
                     env.render()
 
-                q = self.sess.run(fetches=dqn.q_tensor,
-                             feed_dict={dqn.state_ph: state})
+                q = self.sess.run(fetches=dqn.q,
+                             feed_dict={dqn.s: state})
 
                 # action shape (batch_size, num_actions)
 
@@ -154,15 +151,19 @@ class LinearAgent(Agent):
 
 
 def main():
-    cartpole_agent = LinearAgent('CartPole-v0', 2022)
-    mountaincar_agent = LinearAgent('MountainCar-v0', 2022)
-    is_train = True
+    is_train = False
     is_test = False
+    cartpole_agent = LinearAgent('CartPole-v0', 2022)
     if is_train:
         cartpole_agent.train()
-        mountaincar_agent.train()
     if is_test:
         cartpole_agent.test(render=True)
+    is_train = True
+    is_test = True
+    mountaincar_agent = LinearAgent('MountainCar-v0', 5555, epsilon=0.4)
+    if is_train:
+        mountaincar_agent.train()
+    if is_test:
         mountaincar_agent.test(render=True)
 
 if __name__ == '__main__':
