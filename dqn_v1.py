@@ -26,7 +26,7 @@ class Agent(object):
 
         self.eps = 0.05
 
-        self.iterations: int = 20000
+        self.iterations = int(20000)
 
         self.save_path = "./tmp/model_dqn_v1.ckpt"
 
@@ -115,6 +115,70 @@ class Agent(object):
         save_path = saver.save(self.sess, self.save_path)
         print("Model saved in path: %s" % save_path)
 
+    def load_model(self):
+        saver = tf.train.Saver()
+        saver.restore(self.sess, self.save_path)
+
+
+    def test(self, render=False):
+        tf.reset_default_graph()
+        env = gym.make('CartPole-v0')
+        gpu_ops = tf.GPUOptions(allow_growth=True)
+        config = tf.ConfigProto(gpu_options=gpu_ops)
+        self.sess = tf.Session(config=config)
+
+
+        test_episodes = 100
+
+        # instantiate the DQN
+        dqn = DQN_v1(self.state_dim, self.num_actions, self.learning_rate)
+
+        # load weights
+        self.load_model()
+
+        avg_episode_reward = 0.0
+        for epi in range(test_episodes):
+            # initialize the state
+
+            state = env.reset()
+
+            # WARNING: Assuming batch_size = 1
+            cumulative_reward = 0.0
+
+            while True:
+
+                # find the q values
+
+                # q shape (batch_size, num_actions)
+                if render:
+                    env.render()
+
+                q = self.sess.run(fetches=dqn.q_tensor,
+                             feed_dict={dqn.state_ph: state})
+
+                # action shape (batch_size, num_actions)
+
+                # find the corresponding action
+                action = self.greedy_policy(q)
+
+
+                state_next, reward, is_terminal, info = env.step(action)
+                cumulative_reward = cumulative_reward * self.gamma + reward
+
+
+                # prepare the next loop
+                state = state_next
+
+                if is_terminal:
+                    state = env.reset()
+                    avg_episode_reward += cumulative_reward / test_episodes
+                    cumulative_reward = np.float32(0)
+                    break
+
+
+        print('Testing done')
+        print('Average discounted episode cumulative reward: ', avg_episode_reward)
+        return
 
 
 
@@ -157,94 +221,18 @@ class DQN_v1(object):
 
 
 
-def test(render=False):
-    tf.reset_default_graph()
-    env = gym.make('CartPole-v0')
-    gpu_ops = tf.GPUOptions(allow_growth=True)
-    config = tf.ConfigProto(gpu_options=gpu_ops)
-    sess = tf.Session(config=config)
 
-    num_actions = env.action_space.n
-
-    # the dimension of a state observation
-    state_dim = env.observation_space.shape[0]
-
-    batch_size = 1
-
-    learning_rate = 0.0001
-
-    stop_criteria = 0.0001
-
-    gamma = 1
-
-    test_episodes = 100
-
-    # instantiate the DQN
-    dqn = DQN_v1(state_dim, num_actions, learning_rate)
-
-    # load weights
-    saver = tf.train.Saver()
-
-    saver.restore(sess, "./tmp/model_dqn_v1.ckpt")
-
-    avg_episode_reward = 0.0
-    for epi in range(test_episodes):
-        # initialize the state
-
-        state = env.reset()
-
-
-
-        # WARNING: Assuming batch_size = 1
-        cumulative_reward = 0.0
-
-        while True:
-
-            # find the q values
-
-            # q shape (batch_size, num_actions)
-            if render:
-                env.render()
-
-            q = sess.run(fetches=dqn.q_tensor,
-                         feed_dict={dqn.state_ph: state})
-
-            # action shape (batch_size, num_actions)
-
-            # find the corresponding action
-            action = greedy_policy(q, num_actions, batch_size)
-
-
-            state_next, reward, is_terminal, info = env.step(action)
-            cumulative_reward = cumulative_reward * gamma + reward
-
-
-            # prepare the next loop
-            state = state_next
-
-            if is_terminal:
-                state = env.reset()
-                state = np.array(state)
-                state = state.reshape((batch_size, state_dim))
-                avg_episode_reward += cumulative_reward / test_episodes
-                cumulative_reward = np.float32(0)
-                break
-
-
-    print('Testing done')
-    print('Average discounted episode cumulative reward: ', avg_episode_reward)
-    return
 
 
 def main():
     print(tf.__version__)
     agent = Agent()
-    is_train = True
-    is_test = False
+    is_train = False
+    is_test = True
     if is_train:
         agent.train()
     if is_test:
-        test(render=True)
+        agent.test(render=True)
     return
 
 
