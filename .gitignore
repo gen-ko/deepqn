@@ -97,5 +97,5 @@ ENV/
 
 # mypy
 .mypy_cache/
-.tmp/
-.trained/
+tmp/
+trained/
