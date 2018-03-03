@@ -17,19 +17,18 @@ from tester import Tester
 
 def main():
     print(tf.__version__)
-    mr = MemoryReplayer(cache_size=300, eps=0.5, gamma=0.95)
-
-    qn = DeepQN(state_dim=mr.state_dim, num_actions=mr.num_actions, gamma=0.95, hidden_units=6)
-
-    learning_rate = 0.0005
-
-    train_op = tf.train.AdamOptimizer(learning_rate).minimize(qn.loss)
-
-
     gpu_ops = tf.GPUOptions(allow_growth=True)
     config = tf.ConfigProto(gpu_options=gpu_ops)
     sess = tf.Session(config=config)
 
+
+    mr = MemoryReplayer(cache_size=50000, eps=0.5, gamma=0.95)
+
+    qn = DeepQN(state_dim=mr.state_dim, num_actions=mr.num_actions, gamma=0.99)
+
+    qn.reset_sess(sess)
+
+    qn.set_train(0.001)
 
     init = tf.global_variables_initializer()
     sess.run(init)
@@ -40,24 +39,44 @@ def main():
     testor.run(qn, sess)
 
 
+    env = gym.make('CartPole-v0')
 
+    eps = 0.2
 
-    for i in range(1000):
-        s, s_, r, a, q_ = mr.get_batch(size=32, qn=qn, sess=sess)
+    score = []
 
-        sess.run(train_op, feed_dict={qn.s: s, qn.reduced_q_: q_, qn.r: r, qn.a: a})
+    for epi in range(1000000):
+        s = env.reset()
 
-        t1 = sess.run(qn.q, {qn.s: mr.s0})
-        t2 = sess.run(qn.q_, {qn.s_: mr.s0})
+        done = False
 
+        rc = 0
 
-        #with tf.variable_scope('q', reuse=True):
-        #    w = tf.get_variable('kernel')
+        while not done:
+            a = qn.select_action_eps_greedy(eps, s)
 
-        # w_value = sess.run(w)
+            a_ = a[0]
 
-        print('update round: ', i + 1)
-        testor.run(qn, sess)
+            s_, r, done, _ = env.step(a_)
+
+            mr.remember(s, s_, r, a_, done)
+
+            s = s_
+
+            rc += r
+
+        score.append(rc)
+
+        # replay
+
+        s, s_, r, a, done = mr.replay(batch_size=32)
+
+        qn.train(s, s_, r, a, done)
+
+        if (epi + 1) % 1000 == 0:
+            print('avg score last 1000 episodes ', np.mean(score))
+            score = []
+
     return
 
 

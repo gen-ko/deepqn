@@ -10,90 +10,42 @@ class MemoryReplayer(object):
 
         self.env_name = env_name
         self.env = gym.make(self.env_name)
+
         self.cache_size = cache_size
         self.num_actions = self.env.action_space.n
         self.state_dim = self.env.observation_space.shape[0]
         self.eps = eps
         self.gamma = gamma
+        self.env.close()
 
-        self.s0 = np.zeros(shape=(cache_size, self.state_dim), dtype=np.float32)
-        self.s1 = np.zeros(shape=(cache_size, self.state_dim), dtype=np.float32)
+        self.s = np.zeros(shape=(cache_size, self.state_dim), dtype=np.float32)
+        self.s_ = np.zeros(shape=(cache_size, self.state_dim), dtype=np.float32)
         self.r  = np.zeros(shape=(cache_size, ), dtype=np.float32)
         self.a  = np.zeros(shape=(cache_size, ), dtype=np.int32)
+        self.done = np.zeros(shape=(cache_size, ), dtype=np.bool)
 
-        self.q_ = np.zeros(shape=(cache_size, ), dtype=np.float32)
-        self.init_run()
-
-        self.load_counter = 0
+        self.used_counter = 0
+        self.mem_counter = 0
         return
 
-    def init_run(self):
-        self.env.reset()
-        self.a = np.random.randint(self.num_actions, size=self.cache_size)
-        self.q_ = np.random.standard_normal(self.cache_size)
-        for i in range(self.cache_size):
-            if self.env.env.state is None:
-                self.env.reset()
-            if self.env.env.steps_beyond_done is not None:
-                self.env.reset()
-            self.s0[i] = self.env.env.state
-            self.s1[i], self.r[i], is_terminal, _ = self.env.step(self.a[i])
-            self.r[i] -= self.gamma
-            if is_terminal:
-                self.r[i] -= self.gamma
+    def remember(self, s, s_, r, a, done):
 
+        self.s[self.mem_counter] = s
+        self.s[self.mem_counter] = s_
+        self.r[self.mem_counter] = r
+        self.a[self.mem_counter] = a
+        self.done[self.mem_counter] = done
+        self.mem_counter = (self.mem_counter + 1) % self.cache_size
+        if self.used_counter < self.cache_size:
+            self.used_counter += 1
 
-        index = np.random.permutation(np.arange(0, self.cache_size))
-        self.s0 = self.s0[index]
-        self.s1 = self.s1[index]
-        self.a = self.a[index]
-        self.r = self.r[index]
-        self.q_ = self.q_[index]
-        self.load_counter = 0
-        return
-
-    def run(self, qn, sess):
-        self.env.reset()
-        self.a = np.random.randint(self.num_actions, size=self.cache_size)
-        for i in range(self.cache_size):
-            if self.env.env.state is None:
-                self.env.reset()
-            if self.env.env.steps_beyond_done is not None:
-                self.env.reset()
-            self.s0[i] = self.env.env.state
-            q = sess.run(qn.q, {qn.s:[self.s0[i]]})
-
-            if np.random.uniform(low=0.0, high=1.0) > self.eps:
-                self.a[i] = np.argmax(q, axis=1)
-
-            self.s1[i], self.r[i], is_terminal, _ = self.env.step(self.a[i])
-            self.q_[i] = np.amax(sess.run(qn.q, {qn.s:[self.s1[i]]}), axis=1)
-            self.r[i] -= self.gamma
-            if is_terminal:
-                self.r[i] -= self.gamma
-
-
-        index = np.random.permutation(np.arange(0, self.cache_size))
-        self.s0 = self.s0[index]
-        self.s1 = self.s1[index]
-        self.a = self.a[index]
-        self.r = self.r[index]
-        self.q_ = self.q_[index]
-        self.load_counter = 0
-        return
-
-    def get_batch(self, qn, sess, size=32):
-        a = self.load_counter
-        b = self.load_counter + size
-        self.load_counter += size
-        if b > self.cache_size:
-            self.run(qn, sess)
-            print('load counter reset')
-            a = self.load_counter
-            b = self.load_counter + size
-        return self.s0[a:b,:], self.s1[a:b,:], self.r[a:b], self.a[a:b], self.q_[a:b]
-
-
-
+    def replay(self, batch_size):
+        batch_idx = np.random.randint(low=0, high=self.used_counter, size=batch_size, dtype=np.int32)
+        s = self.s[batch_idx]
+        s_ = self.s_[batch_idx]
+        r = self.r[batch_idx]
+        a = self.a[batch_idx]
+        done = self.done[batch_idx]
+        return s, s_, r, a, done
 
 
