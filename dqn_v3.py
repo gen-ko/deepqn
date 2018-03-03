@@ -39,32 +39,27 @@ class EnvWrapper(object):
 
         s = np.array(self.si).reshape(self.state_dim)
 
-        new_min_location = self.si[-1][0]
-        new_max_location = self.si[-1][0]
-
         x = si[0]
 
         v = si[1]
 
         h = np.sin(3 * x) * 0.45 + 0.55
 
-        v_update = np.cos(3 * x) * (-0.025)
+        v_update = np.cos(3 * self.x) * (-0.0025)
 
-        r_update = (v - self.v - v_update) * np.sign(v) * 1000
+        r_update = (v - self.v - v_update) * np.sign(v) * 800
 
         if abs(v) >= 0.07:
-            r_update = 1
+            r_update = 0.8
 
         if h > 0.55:
-            r += r_update * 2
+            r += r_update * 1.1
 
         else:
             r += r_update
 
         self.v = v
-
-        if x >= 0.5:
-            r += 1000
+        self.x = x
 
 
         return s, r, done, info
@@ -75,6 +70,7 @@ class EnvWrapper(object):
         si = self.env.reset()
         self.si.append(si)
 
+        self.x = si[0]
         self.v = si[1]
 
 
@@ -173,7 +169,7 @@ def main():
 
             if testor.run(qn, sess, render=False) > -110.0:
                 qn.save('./tmp/dqn_v3.ckpt')
-            
+
     return
 
 
