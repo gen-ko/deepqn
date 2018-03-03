@@ -12,11 +12,14 @@ class Tester(object):
         self.episodes = episodes
         return
 
-    def run(self, qn, sess):
+    def run(self, qn, sess, render=False):
         report_counter: int = 0
         r_sum_avg = 0.0
+        return_value = 0.0
         for epi in range(self.episodes):
             s = self.env.reset()
+            if render:
+                self.env.render()
             is_terminal = False
             r_sum = 0.0
 
@@ -24,6 +27,8 @@ class Tester(object):
                 q = sess.run(qn.q, feed_dict={qn.s: [s]})
                 a = np.argmax(q)
                 s_, r, is_terminal, _ = self.env.step(a)
+                if render:
+                    self.env.render()
                 r_sum += r
                 s = s_
 
@@ -32,9 +37,10 @@ class Tester(object):
                     report_counter += 1
                     if report_counter % self.report_interval == 0:
                         print('Test reward avg: ', r_sum_avg)
+                        return_value = r_sum_avg
                         r_sum_avg = 0.0
                         report_counter = 0
-        return
+        return return_value
 
 
 

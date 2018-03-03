@@ -46,11 +46,25 @@ class EnvWrapper(object):
 
         v = si[1]
 
-        v_update = np.cos(3 * x)*(-0.025)
+        h = np.sin(3 * x) * 0.45 + 0.55
 
-        r += (v - self.v - v_update) * np.sign(v) * 1000
+        v_update = np.cos(3 * x) * (-0.025)
+
+        r_update = (v - self.v - v_update) * np.sign(v) * 1000
+
+        if abs(v) >= 0.07:
+            r_update = 1
+
+        if h > 0.55:
+            r += r_update * 2
+
+        else:
+            r += r_update
 
         self.v = v
+
+        if x >= 0.5:
+            r += 1000
 
 
         return s, r, done, info
@@ -115,7 +129,7 @@ def main():
     init = tf.global_variables_initializer()
     sess.run(init)
 
-    testor = Tester(qn, env2, report_interval=100)
+    testor = Tester(qn, env2, report_interval=100, episodes=100)
 
     #print('Pretrain test:')
     #testor.run(qn, sess)
@@ -154,12 +168,12 @@ def main():
 
         if (epi + 1) % 200 == 0:
             avg_score = np.mean(score)
-            print('score2: ', testor.run(qn, sess))
             print('avg score last 200 episodes ', avg_score)
             score = []
-            if avg_score > 1950:
-                break
 
+            if testor.run(qn, sess, render=False) > -110.0:
+                qn.save('./tmp/dqn_v3.ckpt')
+            
     return
 
 
