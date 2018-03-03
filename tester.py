@@ -5,16 +5,17 @@ import numpy as np
 import gym, sys, copy, argparse
 
 class Tester(object):
-    def __init__(self, qn, env_name: str="CartPole-v0", episodes: int=100, report_interval: int=10):
-        self.env_name = env_name
-        self.env = gym.make(env_name)
+    def __init__(self, qn, env, episodes: int=100, report_interval: int=10):
+        self.env = env
         self.qn = qn
         self.report_interval = report_interval
+        self.episodes = episodes
+        return
 
     def run(self, qn, sess):
         report_counter: int = 0
         r_sum_avg = 0.0
-        for epi in range(100):
+        for epi in range(self.episodes):
             s = self.env.reset()
             is_terminal = False
             r_sum = 0.0
@@ -30,7 +31,7 @@ class Tester(object):
                     r_sum_avg += r_sum / self.report_interval
                     report_counter += 1
                     if report_counter % self.report_interval == 0:
-                        print('Total reward avg: ', r_sum_avg)
+                        print('Test reward avg: ', r_sum_avg)
                         r_sum_avg = 0.0
                         report_counter = 0
         return

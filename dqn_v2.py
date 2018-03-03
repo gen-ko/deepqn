@@ -21,8 +21,8 @@ def main():
     config = tf.ConfigProto(gpu_options=gpu_ops)
     sess = tf.Session(config=config)
 
-
-    mr = MemoryReplayer(cache_size=100000)
+    env = gym.make('CartPole-v0')
+    mr = MemoryReplayer(env, cache_size=100000)
 
     qn = DeepQN(state_dim=mr.state_dim, num_actions=mr.num_actions, gamma=0.99)
 
@@ -33,13 +33,10 @@ def main():
     init = tf.global_variables_initializer()
     sess.run(init)
 
-    testor = Tester(qn, report_interval=100)
+    testor = Tester(qn, env, report_interval=100)
 
     print('Pretrain test:')
     testor.run(qn, sess)
-
-
-    env = gym.make('CartPole-v0')
 
     score = []
 
