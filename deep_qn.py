@@ -25,7 +25,7 @@ class DeepQN(object):
                                  units=24,
                                  activation=tf.nn.tanh,
                                  use_bias=True,
-                                 kernel_initializer=tf.random_normal_initializer(),
+                                 kernel_initializer=tf.keras.initializers.glorot_uniform(),
                                  bias_initializer=tf.zeros_initializer(),
                                  name='h1',
                                  trainable=True,
@@ -35,7 +35,7 @@ class DeepQN(object):
                                  units=48,
                                  activation=tf.nn.tanh,
                                  use_bias=True,
-                                 kernel_initializer=tf.random_normal_initializer(),
+                                 kernel_initializer=tf.keras.initializers.glorot_uniform(),
                                  bias_initializer=tf.zeros_initializer(),
                                  name='h2',
                                  trainable=True,
@@ -45,7 +45,7 @@ class DeepQN(object):
                                  units=num_actions,
                                  activation=None,
                                  use_bias=True,
-                                 kernel_initializer=tf.random_normal_initializer(),
+                                 kernel_initializer=tf.keras.initializers.glorot_uniform(),
                                  bias_initializer=tf.zeros_initializer(),
                                  name='q',
                                  trainable=True,
@@ -74,7 +74,7 @@ class DeepQN(object):
         self.sess = sess
 
     def set_train(self, lr):
-        self.train_op = tf.train.AdamOptimizer().minimize(self.loss)
+        self.train_op = tf.train.AdamOptimizer(lr).minimize(self.loss)
 
     def predict(self, state):
         if state.ndim == 1:

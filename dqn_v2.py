@@ -22,7 +22,7 @@ def main():
     sess = tf.Session(config=config)
 
 
-    mr = MemoryReplayer(cache_size=50000, eps=0.5, gamma=0.95)
+    mr = MemoryReplayer(cache_size=100000)
 
     qn = DeepQN(state_dim=mr.state_dim, num_actions=mr.num_actions, gamma=0.99)
 
@@ -41,8 +41,6 @@ def main():
 
     env = gym.make('CartPole-v0')
 
-    eps = 0.2
-
     score = []
 
     for epi in range(1000000):
@@ -53,7 +51,7 @@ def main():
         rc = 0
 
         while not done:
-            a = qn.select_action_eps_greedy(eps, s)
+            a = qn.select_action_eps_greedy(get_eps(epi), s)
 
             a_ = a[0]
 
@@ -69,19 +67,22 @@ def main():
 
         # replay
 
-        s, s_, r, a, done = mr.replay(batch_size=32)
+        s, s_, r, a, done = mr.replay(batch_size=64)
 
         qn.train(s, s_, r, a, done)
 
-        if (epi + 1) % 1000 == 0:
-            print('avg score last 1000 episodes ', np.mean(score))
+        if (epi + 1) % 200 == 0:
+            avg_score = np.mean(score)
+            print('avg score last 200 episodes ', avg_score)
             score = []
+            if avg_score > 195:
+                break
 
     return
 
 
-
-
+def get_eps(t):
+    return max(0.01, 1.0 - np.log10(t + 1) * 0.995)
 
 if __name__ == '__main__':
     main()
