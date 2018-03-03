@@ -99,8 +99,7 @@ class EnvWrapper(object):
             return self._shape
 
 
-
-def main():
+def train():
     print(tf.__version__)
 
 
@@ -127,11 +126,7 @@ def main():
 
     testor = Tester(qn, env2, report_interval=100, episodes=100)
 
-    #print('Pretrain test:')
-    #testor.run(qn, sess)
-
     score = []
-    score2 = []
 
     for epi in range(1000000):
 
@@ -171,6 +166,37 @@ def main():
                 qn.save('./tmp/dqn_v3.ckpt')
 
     return
+
+def test(render=False, path='./tmp/dqn_v3.ckpt', episodes=100):
+    gpu_ops = tf.GPUOptions(allow_growth=True)
+    config = tf.ConfigProto(gpu_options=gpu_ops)
+    sess = tf.Session(config=config)
+
+    qn = DeepQN(state_dim=2, num_actions=3, gamma=0.99)
+
+    qn.reset_sess(sess)
+
+    qn.load(path)
+
+    env = gym.make('MountainCar-v0')
+
+    testor = Tester(qn, env, report_interval=100, episodes=100)
+
+    testor.run(qn, sess, render=render)
+
+    return
+
+
+def main():
+    is_train = False
+    is_test = True
+
+    if is_train:
+        train()
+
+    if is_test:
+        test(render=True)
+
 
 
 def get_eps(t):

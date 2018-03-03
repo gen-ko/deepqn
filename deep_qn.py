@@ -110,7 +110,7 @@ class DeepQN(object):
     def load(self, path='./tmp/dqn_v2.ckpt'):
         saver = tf.train.Saver()
         saver.restore(self.sess, path)
-        print("Model loaded in path: %s" % save_path)
+        print("Model loaded in path: %s" % path)
         return
 
 
