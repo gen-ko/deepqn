@@ -169,6 +169,7 @@ def main():
 
             if testor.run(qn, sess, render=False) > -110.0:
                 qn.save('./tmp/dqn_v3.ckpt')
+                break
 
     return
 
