@@ -18,11 +18,16 @@ def main():
     sess = tf.Session(config=config)
 
     env = gym.make('CartPole-v0')
-    mr = MemoryReplayer(env, cache_size=100000)
+
+    state_shape = env.observation_space.shape
+    num_actions = env.action_space.n
+
+    mr = MemoryReplayer(state_shape, capacity=100000)
+
 
     # set type='v1' for linear model, 'v3' for three layer model (two tanh activations)
 
-    qn = DeepQN(state_shape=mr.state_shape, num_actions=mr.num_actions, gamma=0.99, type='v1')
+    qn = DeepQN(state_shape=mr.state_shape, num_actions=num_actions, gamma=0.99, type='v1')
 
     qn.reset_sess(sess)
 

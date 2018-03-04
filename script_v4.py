@@ -3,6 +3,8 @@
 import tensorflow as tf
 import numpy as np
 import gym, sys, copy, argparse
+from image_preprocessing import image_prep
+
 
 from collections import deque
 
@@ -16,6 +18,8 @@ class EnvWrapper(object):
     def __init__(self, env, frame_stack=1):
         self.env = env
         self.action_space = self.ActionSpace(env.action_space.n)
+
+        self.action_space
 
         tmp_shape = (env.observation_space.shape, frame_stack)
 
