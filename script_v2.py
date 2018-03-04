@@ -9,6 +9,7 @@ from deep_qn import DeepQN
 from tester import Tester
 from plotter import Plotter
 
+from env_wrapper import EnvWrapper
 
 
 def main():
@@ -17,17 +18,13 @@ def main():
     config = tf.ConfigProto(gpu_options=gpu_ops)
     sess = tf.Session(config=config)
 
-    env = gym.make('CartPole-v0')
+    env = EnvWrapper('CartPole-v0')
 
-    state_shape = env.observation_space.shape
-    num_actions = env.action_space.n
-
-    mr = MemoryReplayer(state_shape, capacity=100000)
-
+    mr = MemoryReplayer(env.state_shape, capacity=100000)
 
     # set type='v1' for linear model, 'v3' for three layer model (two tanh activations)
 
-    qn = DeepQN(state_shape=mr.state_shape, num_actions=num_actions, gamma=0.99, type='v1')
+    qn = DeepQN(state_shape=env.state_shape, num_actions=env.num_actions, gamma=0.99, type='v3')
 
     qn.reset_sess(sess)
 

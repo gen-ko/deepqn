@@ -11,15 +11,14 @@ class DeepQN(object):
         self.state_shape = state_shape
         self.state_ndim = len(state_shape)
         self.num_actions = num_actions
+        self.state_batch_shape = [None]
+
+        for i in range(self.state_ndim):
+            self.state_batch_shape.append(self.state_shape[i])
 
         with tf.name_scope(scope):
-
-            tmp_shape = [None]
-            for i in range(self.state_ndim):
-                tmp_shape.append(self.state_shape[i])
-
             self.s = tf.placeholder(dtype=tf.float32,
-                                     shape=tmp_shape,
+                                     shape=self.state_batch_shape,
                                      name='s')
 
             self.a = tf.placeholder(dtype=tf.int32,
@@ -55,8 +54,9 @@ class DeepQN(object):
                                          reuse=None)
 
             if type == 'v4':
+                self.s_trans = tf.transpose(self.s, [0, 2, 3, 1])
                 self.h1 = tf.layers.conv2d(
-                    inputs=self.s,
+                    inputs=self.s_trans,
                     filters=16,
                     kernel_size=[8, 8],
                     strides=(4, 4),
@@ -74,9 +74,14 @@ class DeepQN(object):
                     data_format='channels_last',
                     name='h2')
 
+                self.h3 = tf.contrib.layers.flatten(
+                    inputs=self.h2,
+                    outputs_collections=None,
+                )
+
                 # dense layer automatically make the inputs flattened
                 self.h_last = tf.layers.dense(
-                    inputs=self.h2,
+                    inputs=self.h3,
                     units=256,
                     activation=tf.nn.relu,
                     use_bias=True,
@@ -124,8 +129,10 @@ class DeepQN(object):
         self.train_op = tf.train.AdamOptimizer(lr, beta1=beta1, beta2=beta2).minimize(self.loss)
 
     def predict(self, state):
-        if state.ndim == 1:
-            state = state.reshape([1, -1])
+        if state.ndim == self.state_ndim:
+            tmp_shape = self.state_batch_shape
+            tmp_shape[0] = 1
+            state = state.reshape(tmp_shape)
         return self.sess.run(self.q, {self.s: state})
 
     def select_action_greedy(self, state):

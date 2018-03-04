@@ -3,6 +3,7 @@
 import tensorflow as tf
 import numpy as np
 import gym, sys, copy, argparse
+
 from image_preprocessing import image_prep
 
 
@@ -19,25 +20,30 @@ class EnvWrapper(object):
         self.env = env
         self.action_space = self.ActionSpace(env.action_space.n)
 
-        self.action_space
+        self.state_shape = (4, 84, 84)
 
-        tmp_shape = (env.observation_space.shape, frame_stack)
+        # tmp_shape = (env.observation_space.shape, frame_stack)
 
-        self.observation_space = self.ObservationSpace(tmp_shape)
+        # self.observation_space = self.ObservationSpace(tmp_shape)
         self.frame_stack = frame_stack
-        self.state_shape = tmp_shape
+        # self.state_shape = tmp_shape
 
         self.si = deque(iterable=[], maxlen=frame_stack)
+        self.render = self.env.render
         return
 
     def step(self, a):
         si, r, done, info = self.env.step(a)
+        si = image_prep(si)
         self.si.append(si)
         s = np.array(self.si)
         return s, r, done, info
 
     def reset(self):
-        self.si.append(self.env.reset())
+        self.si.append(image_prep(self.env.reset()))
+        self.si.append(image_prep(self.env.reset()))
+        self.si.append(image_prep(self.env.reset()))
+        self.si.append(image_prep(self.env.reset()))
         s = np.array(self.si)
         return s
 
@@ -61,13 +67,17 @@ def train():
 
     envi = gym.make('SpaceInvaders-v0')
 
+    num_actions = 6
+
+    state_shape = (4, 84, 84)
+
     env = EnvWrapper(envi, frame_stack=4)
 
     env2 = gym.make('SpaceInvaders-v0')
 
-    mr = MemoryReplayer(env, cache_size=100000)
+    mr = MemoryReplayer(state_shape=state_shape, capacity=1000)
 
-    qn = DeepQN(state_shape=env.state_shape, num_actions=mr.num_actions, gamma=0.99, type='v4')
+    qn = DeepQN(state_shape=state_shape, num_actions=num_actions, gamma=0.99, type='v4')
 
     qn.reset_sess(sess)
 
@@ -76,11 +86,11 @@ def train():
     init = tf.global_variables_initializer()
     sess.run(init)
 
-    testor = Tester(qn, env2, report_interval=100, episodes=100)
+    testor = Tester(qn, env, report_interval=1, episodes=1)
 
     score = []
 
-    for epi in range(1000000):
+    for epi in range(1000):
 
         s = env.reset()
 
@@ -105,17 +115,17 @@ def train():
 
         # replay
 
-        s, s_, r, a, done = mr.replay(batch_size=64)
+        s, s_, r, a, done = mr.replay(batch_size=32)
 
         qn.train(s, s_, r, a, done)
 
-        if (epi + 1) % 200 == 0:
+        if (epi + 1) % 20 == 0:
             avg_score = np.mean(score)
-            print('avg score last 200 episodes ', avg_score)
+            print('avg score last 20 episodes ', avg_score)
             score = []
 
-            if testor.run(qn, sess, render=False) > -110.0:
-                qn.save('./tmp/dqn_v3.ckpt')
+            if testor.run(qn, sess, render=False) > 5000:
+                qn.save('./tmp/dqn_v4.ckpt')
                 break
 
     return
@@ -125,7 +135,7 @@ def test(render=False, path='./tmp/dqn_v3.ckpt', episodes=100):
     config = tf.ConfigProto(gpu_options=gpu_ops)
     sess = tf.Session(config=config)
 
-    qn = DeepQN(state_dim=2, num_actions=3, gamma=0.99)
+    qn = DeepQN(state_shape=(84,84,4), num_actions=6, gamma=0.99)
 
     qn.reset_sess(sess)
 
@@ -141,8 +151,8 @@ def test(render=False, path='./tmp/dqn_v3.ckpt', episodes=100):
 
 
 def main():
-    is_train = False
-    is_test = True
+    is_train = True
+    is_test = False
 
     if is_train:
         train()
