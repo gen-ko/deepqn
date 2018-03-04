@@ -5,7 +5,6 @@ import numpy as np
 import gym, sys, copy, argparse
 
 from memory_replay import MemoryReplayer
-from linear_qn import LinearQN
 from deep_qn import DeepQN
 from tester import Tester
 
@@ -24,7 +23,9 @@ def main():
     env = gym.make('CartPole-v0')
     mr = MemoryReplayer(env, cache_size=100000)
 
-    qn = DeepQN(state_dim=mr.state_dim, num_actions=mr.num_actions, gamma=0.99)
+    # set type='v1' for linear model, 'v3' for three layer model (two tanh activations)
+
+    qn = DeepQN(state_dim=mr.state_dim, num_actions=mr.num_actions, gamma=0.99, type='v1')
 
     qn.reset_sess(sess)
 

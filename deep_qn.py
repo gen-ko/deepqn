@@ -11,19 +11,23 @@ class DeepQN(object):
         self.num_actions = num_actions
 
         with tf.name_scope(scope):
+
+            self.s = tf.placeholder(dtype=tf.float32,
+                                     shape=[None, state_dim],
+                                     name='s')
+
+            self.a = tf.placeholder(dtype=tf.int32,
+                                    shape=None,
+                                    name='a')
+
+            self.r = tf.placeholder(dtype=tf.float32,
+                                    shape=[None],
+                                    name='r')
+
+            if type == 'v1':78u
+                self.h_last = self.s
+
             if type == 'v3':
-                self.s = tf.placeholder(dtype=tf.float32,
-                                         shape=[None, state_dim],
-                                         name='s')
-
-                self.a = tf.placeholder(dtype=tf.int32,
-                                        shape=None,
-                                        name='a')
-
-                self.r = tf.placeholder(dtype=tf.float32,
-                                        shape=[None],
-                                        name='r')
-
                 self.h1 = tf.layers.dense(inputs=self.s,
                                          units=24,
                                          activation=tf.nn.tanh,
@@ -34,7 +38,7 @@ class DeepQN(object):
                                          trainable=True,
                                          reuse=None)
 
-                self.h2 = tf.layers.dense(inputs=self.h1,
+                self.h_last = tf.layers.dense(inputs=self.h1,
                                          units=48,
                                          activation=tf.nn.tanh,
                                          use_bias=True,
@@ -44,30 +48,30 @@ class DeepQN(object):
                                          trainable=True,
                                          reuse=None)
 
-                self.q = tf.layers.dense(inputs=self.h2,
-                                         units=num_actions,
-                                         activation=None,
-                                         use_bias=True,
-                                         kernel_initializer=tf.keras.initializers.glorot_uniform(),
-                                         bias_initializer=tf.zeros_initializer(),
-                                         name='q',
-                                         trainable=True,
-                                         reuse=None)
+            self.q = tf.layers.dense(inputs=self.h_last,
+                                     units=num_actions,
+                                     activation=None,
+                                     use_bias=True,
+                                     kernel_initializer=tf.keras.initializers.glorot_uniform(),
+                                     bias_initializer=tf.zeros_initializer(),
+                                     name='q',
+                                     trainable=True,
+                                     reuse=None)
 
-                # q_ is the selected q wrt a
-                self.q_ = tf.placeholder(dtype=tf.float32,
-                                         shape=[None],
-                                         name='q_')
+            # q_ is the selected q wrt a
+            self.q_ = tf.placeholder(dtype=tf.float32,
+                                     shape=[None],
+                                     name='q_')
 
-                a_indices = tf.stack([tf.range(tf.shape(self.a)[0], dtype=tf.int32), self.a], axis=1)
+            a_indices = tf.stack([tf.range(tf.shape(self.a)[0], dtype=tf.int32), self.a], axis=1)
 
-                self.estimate = tf.gather_nd(params=self.q, indices=a_indices)  # shape=(None, )
+            self.estimate = tf.gather_nd(params=self.q, indices=a_indices)  # shape=(None, )
 
-                target = gamma * self.q_ + self.r
+            target = gamma * self.q_ + self.r
 
-                self.target = tf.stop_gradient(target)
+            self.target = tf.stop_gradient(target)
 
-                self.loss = tf.reduce_mean(tf.squared_difference(self.target, self.estimate))
+            self.loss = tf.reduce_mean(tf.squared_difference(self.target, self.estimate))
 
         return
 

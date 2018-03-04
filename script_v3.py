@@ -5,7 +5,6 @@ import numpy as np
 import gym, sys, copy, argparse
 
 from memory_replay import MemoryReplayer
-from linear_qn import LinearQN
 from deep_qn import DeepQN
 from tester import Tester
 
