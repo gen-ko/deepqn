@@ -7,10 +7,7 @@ import gym, sys, copy, argparse
 from memory_replay import MemoryReplayer
 from deep_qn import DeepQN
 from tester import Tester
-
-
-
-
+from plotter import Plotter
 
 
 
@@ -33,6 +30,8 @@ def main():
 
     init = tf.global_variables_initializer()
     sess.run(init)
+
+    plotter = Plotter()
 
     testor = Tester(qn, env, report_interval=100)
 
@@ -71,6 +70,7 @@ def main():
 
         if (epi + 1) % 200 == 0:
             avg_score = np.mean(score)
+            plotter.plot(avg_score)
             print('avg score last 200 episodes ', avg_score)
             score = []
             if avg_score > 195:

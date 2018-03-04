@@ -24,7 +24,7 @@ class DeepQN(object):
                                     shape=[None],
                                     name='r')
 
-            if type == 'v1':78u
+            if type == 'v1':
                 self.h_last = self.s
 
             if type == 'v3':
