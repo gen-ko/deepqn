@@ -41,7 +41,7 @@ class EnvWrapper(object):
     def reset_frame(self):
         self.si.append(self.prep(self.env.reset()))
         for i in range(1, self.frame_stack):
-            si = self.env.step(np.random.randint(self.num_actions))
+            si, _, _, _= self.env.step(np.random.randint(self.num_actions))
             self.si.append(self.prep(si))
         s = np.array(self.si)
         return s

@@ -82,7 +82,7 @@ def test(render=False, path='./tmp/dqn_v3.ckpt', episodes=100):
     config = tf.ConfigProto(gpu_options=gpu_ops)
     sess = tf.Session(config=config)
 
-    qn = DeepQN(state_shape=(2,), num_actions=3, gamma=0.99)
+    qn = DeepQN(state_shape=(2,), num_actions=3)
 
     qn.reset_sess(sess)
 
@@ -106,8 +106,6 @@ def main():
 
     if is_test:
         test(render=True)
-
-
 
 def get_eps(t):
     return max(0.01, 1.0 - np.log10(t + 1) * 0.995)
