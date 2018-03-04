@@ -6,14 +6,20 @@ import gym, sys, copy, argparse
 
 
 class DeepQN(object):
-    def __init__(self, state_dim, num_actions, gamma=1.0, type='v3', scope='A'):
+    def __init__(self, state_shape, num_actions, gamma=1.0, type='v3', scope='A'):
         self.sess = None
+        self.state_shape = state_shape
+        self.state_ndim = len(state_shape)
         self.num_actions = num_actions
 
         with tf.name_scope(scope):
 
+            tmp_shape = [None]
+            for i in range(self.state_ndim):
+                tmp_shape.append(self.state_shape[i])
+
             self.s = tf.placeholder(dtype=tf.float32,
-                                     shape=[None, state_dim],
+                                     shape=tmp_shape,
                                      name='s')
 
             self.a = tf.placeholder(dtype=tf.int32,
@@ -48,6 +54,42 @@ class DeepQN(object):
                                          trainable=True,
                                          reuse=None)
 
+            if type == 'v4':
+                self.h1 = tf.layers.conv2d(
+                    inputs=self.s,
+                    filters=16,
+                    kernel_size=[8, 8],
+                    strides=(4, 4),
+                    padding="same",
+                    activation=tf.nn.relu,
+                    data_format='channels_last',
+                    name='h1')
+                self.h2 = tf.layers.conv2d(
+                    inputs=self.h1,
+                    filters=32,
+                    kernel_size=[4, 4],
+                    strides=(2, 2),
+                    padding="same",
+                    activation=tf.nn.relu,
+                    data_format='channels_last',
+                    name='h2')
+
+                # dense layer automatically make the inputs flattened
+                self.h_last = tf.layers.dense(
+                    inputs=self.h2,
+                    units=256,
+                    activation=tf.nn.relu,
+                    use_bias=True,
+                    kernel_initializer=tf.keras.initializers.glorot_uniform(),
+                    bias_initializer=tf.zeros_initializer(),
+                    kernel_regularizer=None,
+                    bias_regularizer=None,
+                    activity_regularizer=None,
+                    trainable=True,
+                    name='h3',
+                    reuse=None
+                )
+
             self.q = tf.layers.dense(inputs=self.h_last,
                                      units=num_actions,
                                      activation=None,
@@ -78,8 +120,8 @@ class DeepQN(object):
     def reset_sess(self, sess):
         self.sess = sess
 
-    def set_train(self, lr):
-        self.train_op = tf.train.AdamOptimizer(lr).minimize(self.loss)
+    def set_train(self, lr, beta1=0.9, beta2=0.999):
+        self.train_op = tf.train.AdamOptimizer(lr, beta1=beta1, beta2=beta2).minimize(self.loss)
 
     def predict(self, state):
         if state.ndim == 1:

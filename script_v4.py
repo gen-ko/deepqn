@@ -4,6 +4,8 @@ import tensorflow as tf
 import numpy as np
 import gym, sys, copy, argparse
 
+from collections import deque
+
 from memory_replay import MemoryReplayer
 from deep_qn import DeepQN
 from tester import Tester
@@ -14,89 +16,36 @@ class EnvWrapper(object):
     def __init__(self, env, frame_stack=1):
         self.env = env
         self.action_space = self.ActionSpace(env.action_space.n)
-        self.observation_space = self.ObservationSpace((env.observation_space.shape[0]*frame_stack,))
-        self.state_dim = self.observation_space.shape[0]
-        self.si = []
+
+        tmp_shape = (env.observation_space.shape, frame_stack)
+
+        self.observation_space = self.ObservationSpace(tmp_shape)
         self.frame_stack = frame_stack
+        self.state_shape = tmp_shape
 
-        self.min_location = 0.0
-        self.max_location = 0.0
-
-        self.si = []
-        self.si.append(self.env.reset())
-
-        self.min_location = self.si[-1][0] - abs(self.si[-1][0])
-        self.max_location = self.si[-1][0] + abs(self.si[-1][0])
-
-
+        self.si = deque(iterable=[], maxlen=frame_stack)
         return
 
     def step(self, a):
         si, r, done, info = self.env.step(a)
-        self.si.pop(0)
         self.si.append(si)
-
-        s = np.array(self.si).reshape(self.state_dim)
-
-        x = si[0]
-
-        v = si[1]
-
-        h = np.sin(3 * x) * 0.45 + 0.55
-
-        v_update = np.cos(3 * self.x) * (-0.0025)
-
-        r_update = (v - self.v - v_update) * np.sign(v) * 800
-
-        if abs(v) >= 0.07:
-            r_update = 0.8
-
-        if h > 0.55:
-            r += r_update * 1.1
-
-        else:
-            r += r_update
-
-        self.v = v
-        self.x = x
-
-
+        s = np.array(self.si)
         return s, r, done, info
 
     def reset(self):
-        self.si = []
-
-        si = self.env.reset()
-        self.si.append(si)
-
-        self.x = si[0]
-        self.v = si[1]
-
-
-        for fi in range(1, self.frame_stack):
-            si, _, _, _ = self.env.step(0)
-            self.si.append(si)
-        s = np.array(self.si).reshape(self.state_dim)
+        self.si.append(self.env.reset())
+        s = np.array(self.si)
         return s
 
     class ActionSpace(object):
         def __init__(self, n):
-            self._n = n
+            self.n = n
             return
-
-        @property
-        def n(self):
-            return self._n
 
     class ObservationSpace(object):
         def __init__(self, shape):
-            self._shape = shape
+            self.shape = shape
             return
-
-        @property
-        def shape(self):
-            return self._shape
-
 
 def train():
     print(tf.__version__)
@@ -106,15 +55,15 @@ def train():
     config = tf.ConfigProto(gpu_options=gpu_ops)
     sess = tf.Session(config=config)
 
-    envi = gym.make('MountainCar-v0')
+    envi = gym.make('SpaceInvaders-v0')
 
-    env = EnvWrapper(envi, frame_stack=1)
+    env = EnvWrapper(envi, frame_stack=4)
 
-    env2 = gym.make('MountainCar-v0')
+    env2 = gym.make('SpaceInvaders-v0')
 
     mr = MemoryReplayer(env, cache_size=100000)
 
-    qn = DeepQN(state_shape=mr.state_shape, num_actions=mr.num_actions, gamma=0.99)
+    qn = DeepQN(state_shape=env.state_shape, num_actions=mr.num_actions, gamma=0.99, type='v4')
 
     qn.reset_sess(sess)
 
@@ -172,7 +121,7 @@ def test(render=False, path='./tmp/dqn_v3.ckpt', episodes=100):
     config = tf.ConfigProto(gpu_options=gpu_ops)
     sess = tf.Session(config=config)
 
-    qn = DeepQN(state_shape=(2,), num_actions=3, gamma=0.99)
+    qn = DeepQN(state_dim=2, num_actions=3, gamma=0.99)
 
     qn.reset_sess(sess)
 
@@ -188,7 +137,7 @@ def test(render=False, path='./tmp/dqn_v3.ckpt', episodes=100):
 
 
 def main():
-    is_train = True
+    is_train = False
     is_test = True
 
     if is_train:

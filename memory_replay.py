@@ -12,8 +12,15 @@ class MemoryReplayer(object):
         self.num_actions = env.action_space.n
         self.state_dim = env.observation_space.shape[0]
 
-        self.s = np.zeros(shape=(cache_size, self.state_dim), dtype=np.float32)
-        self.s_ = np.zeros(shape=(cache_size, self.state_dim), dtype=np.float32)
+        self.state_shape = env.observation_space.shape
+        self.state_ndim = len(self.state_shape)
+
+        tmp_shape = [cache_size]
+        for i in range(self.state_ndim):
+            tmp_shape.append(self.state_shape[i])
+
+        self.s = np.zeros(shape=tmp_shape, dtype=np.float32)
+        self.s_ = np.zeros(shape=tmp_shape, dtype=np.float32)
         self.r  = np.zeros(shape=(cache_size, ), dtype=np.float32)
         self.a  = np.zeros(shape=(cache_size, ), dtype=np.int32)
         self.done = np.zeros(shape=(cache_size, ), dtype=np.bool)

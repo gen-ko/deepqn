@@ -22,7 +22,7 @@ def main():
 
     # set type='v1' for linear model, 'v3' for three layer model (two tanh activations)
 
-    qn = DeepQN(state_dim=mr.state_dim, num_actions=mr.num_actions, gamma=0.99, type='v1')
+    qn = DeepQN(state_shape=mr.state_shape, num_actions=mr.num_actions, gamma=0.99, type='v1')
 
     qn.reset_sess(sess)
 
