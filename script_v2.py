@@ -26,7 +26,7 @@ def main():
 
     # type='v5' use dual
 
-    qn = DeepQN(state_shape=env.state_shape, num_actions=env.num_actions, gamma=0.99, type='v3')
+    qn = DeepQN(state_shape=env.state_shape, num_actions=env.num_actions, gamma=0.99, type='v5')
 
     qn.reset_sess(sess)
 
