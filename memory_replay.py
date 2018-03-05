@@ -22,7 +22,7 @@ class MemoryReplayer(object):
         self.a = np.zeros(shape=(capacity, ), dtype=np.int32)
         self.done = np.zeros(shape=(capacity, ), dtype=np.bool)
 
-        self.used_counter = 0
+        self.used_counter = 64
         self.mem_counter = 0
         return
 
@@ -50,8 +50,8 @@ class MemoryReplayer(object):
 class MemoryReplayerTF(object):
     def __init__(self, state_shape, capacity: int = 100000, batch_size=128):
 
-        self.capacity = tf.constant(value=0, dtype=TF_INT_TYPE)
-        self.batch_size = tf.constant(value=128, dtype=TF_INT_TYPE)
+        self.capacity = tf.constant(value=capacity, dtype=TF_INT_TYPE)
+        self.batch_size = tf.constant(value=batch_size, dtype=TF_INT_TYPE)
         self.batch_size_scalar = batch_size
         self.state_shape = state_shape
         self.state_ndim = len(self.state_shape)
@@ -93,6 +93,7 @@ class MemoryReplayerTF(object):
         return
 
     def remember(self, sess, s, s_, r, a, done):
+        self.used_counter += 1
         return sess.run(self.update_op, {self.s_old_ph: s,
                                          self.s_new_ph: s_,
                                          self.r_ph: r,
@@ -100,7 +101,7 @@ class MemoryReplayerTF(object):
                                          self.done_ph: done})
 
     def replay_register(self):
-        batch_idx = tf.random_uniform(shape=[self.batch_size], minval=0, maxval=self.used_counter, dtype=TF_INT_TYPE)
+        batch_idx = tf.random_uniform(shape=[self.batch_size], minval=0, maxval=self.capacity, dtype=TF_INT_TYPE)
         #s = self.s[batch_idx[0]]
         s = tf.gather(self.s, batch_idx)
         s_ = tf.gather(self.s_, batch_idx)
