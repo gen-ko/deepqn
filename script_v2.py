@@ -15,7 +15,7 @@ from env_wrapper import EnvWrapper
 def main():
     print(tf.__version__)
     gpu_ops = tf.GPUOptions(allow_growth=True)
-    config = tf.ConfigProto(gpu_options=gpu_ops, log_device_placement=True)
+    config = tf.ConfigProto(gpu_options=gpu_ops, log_device_placement=False)
     sess = tf.Session(config=config)
 
     env = EnvWrapper('CartPole-v0')
