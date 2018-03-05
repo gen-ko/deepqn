@@ -2,7 +2,6 @@
 
 import tensorflow as tf
 import numpy as np
-import gym, sys, copy, argparse
 
 
 class DeepQN(object):
@@ -51,25 +50,7 @@ class DeepQN(object):
         self.loss = tf.reduce_mean(tf.squared_difference(self.target, self.estimate))
         return
 
-    def loss_graph(self, s, s_, r, a, done, gamma=0.99, scope='D'):
-        q  = self.core_graph(s, type=self.type, scope=self.scope)
-        q_ = self.core_graph(s_, type=self.type, scope=self.scope)
-        q_ = tf.reduce_max(q_)
-        tmp1 = tf.shape(a)
-        tmp2 = tmp1[0]
-        tmp3 = tf.range(tmp2, dtype=tf.int32)
-        tmp4 = [tmp3, a]
-        tmp5 = tf.stack(tmp4, axis=1)
-        a_indices = tf.stack([tf.range(tf.shape(self.a)[0], dtype=tf.int32), a], axis=1)
-        estimate = tf.gather_nd(params=q, indices=a_indices)
-        target = gamma * q_ + tf.where(done, 0, r)
-        loss = tf.reduce_mean(tf.squared_difference(target, estimate))
-        return loss
-
-    def train_op(self, loss, lr=0.0001, beta1=0.9, beta2=0.999, scope='C'):
-        return tf.train.AdamOptimizer(lr, beta1=beta1, beta2=beta2).minimize(loss)
-
-    def core_graph(self, s, type='v3', scope=None):
+    def core_graph(self, s, type='v3'):
         h_last = None
 
         if type == 'v1':
