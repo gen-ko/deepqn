@@ -16,19 +16,19 @@ def train():
 
 
     gpu_ops = tf.GPUOptions(allow_growth=True)
-    config = tf.ConfigProto(gpu_options=gpu_ops)
+    config = tf.ConfigProto(gpu_options=gpu_ops,
+                            log_device_placement=True)
     sess = tf.Session(config=config)
 
     env = EnvWrapper('SpaceInvaders-v0')
 
-
-    mr = MemoryReplayer(state_shape=env.state_shape, capacity=1000)
+    mr = MemoryReplayer(state_shape=env.state_shape, capacity=100000)
 
     qn = DeepQN(state_shape=env.state_shape, num_actions=env.num_actions, gamma=0.99, type='v4')
 
     qn.reset_sess(sess)
 
-    qn.set_train(0.001)
+    qn.set_train(0.0001)
 
     init = tf.global_variables_initializer()
     sess.run(init)
@@ -37,7 +37,9 @@ def train():
 
     score = []
 
-    for epi in range(1000):
+    max_score = 0.0
+
+    for epi in range(100000):
 
         s = env.reset()
 
@@ -62,7 +64,7 @@ def train():
 
         # replay
 
-        s, s_, r, a, done = mr.replay(batch_size=32)
+        s, s_, r, a, done = mr.replay(batch_size=128)
 
         qn.train(s, s_, r, a, done)
 
@@ -70,14 +72,14 @@ def train():
             avg_score = np.mean(score)
             print('avg score last 20 episodes ', avg_score)
             score = []
-
-            if testor.run(qn, sess, render=False) > 5000:
+            if avg_score > max_score:
+                max_score = avg_score
+                testor.run(qn, sess, render=False)
                 qn.save('./tmp/dqn_v4.ckpt')
-                break
 
     return
 
-def test(render=False, path='./tmp/dqn_v3.ckpt', episodes=100):
+def test(render=False, path='./tmp/dqn_v4.ckpt', episodes=100):
     gpu_ops = tf.GPUOptions(allow_growth=True)
     config = tf.ConfigProto(gpu_options=gpu_ops)
     sess = tf.Session(config=config)

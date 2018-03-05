@@ -135,6 +135,11 @@ class DeepQN(object):
             state = state.reshape(tmp_shape)
         return self.sess.run(self.q, {self.s: state})
 
+    def predict_tf_register(self, state):
+        # state is a tensor
+        tf.assign(self.s, state)
+        return
+
     def select_action_greedy(self, state):
         q = self.predict(state)
         return np.argmax(q, axis=1)
@@ -154,6 +159,9 @@ class DeepQN(object):
                                       self.r: r,
                                       self.a: a})
         return
+
+    def train_tf_register(self, s, s_, r, a, done):
+        # TODO
 
     def save(self, path='./tmp/dqn_v2.ckpt'):
         saver = tf.train.Saver()
