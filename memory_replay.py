@@ -50,8 +50,9 @@ class MemoryReplayer(object):
 class MemoryReplayerTF(object):
     def __init__(self, state_shape, capacity: int = 100000, batch_size=128):
 
-        self.capacity = tf.Constant(value=0, dtype=TF_INT_TYPE)
-        self.batch_size = tf.Constant(value=128, dtype=TF_INT_TYPE)
+        self.capacity = tf.constant(value=0, dtype=TF_INT_TYPE)
+        self.batch_size = tf.constant(value=128, dtype=TF_INT_TYPE)
+        self.batch_size_scalar = batch_size
         self.state_shape = state_shape
         self.state_ndim = len(self.state_shape)
 
@@ -64,9 +65,9 @@ class MemoryReplayerTF(object):
 
         self.s = tf.Variable(initial_value=tf.zeros(shape=self.tensor_shape, dtype=TF_FLOAT_TYPE), trainable=False)
         self.s_ = tf.Variable(initial_value=tf.zeros(shape=self.tensor_shape, dtype=TF_FLOAT_TYPE), trainable=False)
-        self.r = tf.Variable(initial_value=tf.zeros(shape=self.capacity, dtype=TF_INT_TYPE))
-        self.a = tf.Variable(initial_value=tf.zeros(shape=self.capacity, dtype=TF_INT_TYPE))
-        self.done = tf.Variable(initial_value=tf.zeros(shape=self.capacity, dtype=tf.bool))
+        self.r = tf.Variable(initial_value=tf.zeros(shape=[self.capacity], dtype=TF_FLOAT_TYPE))
+        self.a = tf.Variable(initial_value=tf.zeros(shape=[self.capacity], dtype=TF_INT_TYPE))
+        self.done = tf.Variable(initial_value=tf.zeros(shape=[self.capacity], dtype=tf.bool))
 
         self.used_counter = tf.Variable(initial_value=0, dtype=TF_INT_TYPE)
         self.mem_counter = tf.Variable(initial_value=0, dtype=TF_INT_TYPE)
@@ -84,7 +85,8 @@ class MemoryReplayerTF(object):
         self.update_op5 = tf.assign(self.done[self.mem_counter], self.done_ph)
 
         self.update_op6 = tf.assign(self.mem_counter, tf.mod(tf.assign_add(self.mem_counter, 1), self.capacity))
-        self.update_op7 = tf.cond(tf.less(self.used_counter, self.capacity), tf.assign_add(self.mem_counter, 1))
+        self.update_op7 = tf.where(tf.less(self.used_counter, self.capacity), tf.assign_add(self.mem_counter, 1),
+                                  tf.assign_add(self.mem_counter, 0))
 
         self.update_op = [self.update_op1, self.update_op2, self.update_op3,
                           self.update_op4, self.update_op5, self.update_op6, self.update_op7]
@@ -98,11 +100,13 @@ class MemoryReplayerTF(object):
                                          self.done_ph: done})
 
     def replay_register(self):
-        batch_idx = tf.random_uniform(shape=self.batch_shape, minval=0, maxval=self.used_counter, dtype=TF_INT_TYPE)
-        s = self.s[batch_idx]
-        s_ = self.s_[batch_idx]
-        r = self.r[batch_idx]
-        a = self.a[batch_idx]
-        done = self.done[batch_idx]
+        batch_idx = tf.random_uniform(shape=[self.batch_size], minval=0, maxval=self.used_counter, dtype=TF_INT_TYPE)
+        #s = self.s[batch_idx[0]]
+        s = tf.gather(self.s, batch_idx)
+        s_ = tf.gather(self.s_, batch_idx)
+        r = tf.gather(self.r, batch_idx)
+        a = tf.gather(self.a, batch_idx)
+        done = tf.gather(self.done, batch_idx)
+        self.replay_op = [s, s_, r, a, done]
         return s, s_, r, a, done
 

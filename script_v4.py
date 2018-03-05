@@ -5,7 +5,7 @@ import numpy as np
 import gym, sys, copy, argparse
 
 
-from memory_replay import MemoryReplayer
+from memory_replay import MemoryReplayerTF
 from deep_qn import DeepQN
 from tester import Tester
 
@@ -13,8 +13,6 @@ from env_wrapper import EnvWrapper
 
 def train():
     print(tf.__version__)
-
-
     gpu_ops = tf.GPUOptions(allow_growth=True)
     config = tf.ConfigProto(gpu_options=gpu_ops,
                             log_device_placement=True)
@@ -22,9 +20,15 @@ def train():
 
     env = EnvWrapper('SpaceInvaders-v0')
 
-    mr = MemoryReplayer(state_shape=env.state_shape, capacity=100000)
+    mr = MemoryReplayerTF(state_shape=env.state_shape, capacity=100000)
+
+    mr_s, mr_s_, mr_r, mr_a, mr_done = mr.replay_register()
 
     qn = DeepQN(state_shape=env.state_shape, num_actions=env.num_actions, gamma=0.99, type='v4')
+
+    loss = qn.loss_graph(mr_s, mr_s_, mr_r, mr_a, mr_done)
+
+    train_op = qn.train_op(loss)
 
     qn.reset_sess(sess)
 
@@ -64,9 +68,7 @@ def train():
 
         # replay
 
-        s, s_, r, a, done = mr.replay(batch_size=128)
-
-        qn.train(s, s_, r, a, done)
+        sess.run(train_op)
 
         if (epi + 1) % 20 == 0:
             avg_score = np.mean(score)

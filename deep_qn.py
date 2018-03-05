@@ -6,17 +6,24 @@ import gym, sys, copy, argparse
 
 
 class DeepQN(object):
-    def __init__(self, state_shape, num_actions, gamma=1.0, type='v3', scope='A'):
-        self.sess = None
-        self.state_shape = state_shape
-        self.state_ndim = len(state_shape)
-        self.num_actions = num_actions
-        self.state_batch_shape = [None]
+    def __init__(self, state_shape, num_actions, gamma=1.0, type='v3', scope='DQN'):
+        with tf.variable_scope(scope, reuse=tf.AUTO_REUSE):
+            self.sess = None
+            self.type = type
+            self.scope = scope
+            self.state_shape = state_shape
+            self.state_ndim = len(state_shape)
+            self.num_actions = num_actions
+            self.state_batch_shape = [None]
+            self.state_batch_shape_valid = [1]
 
-        for i in range(self.state_ndim):
-            self.state_batch_shape.append(self.state_shape[i])
+            for i in range(self.state_ndim):
+                self.state_batch_shape.append(self.state_shape[i])
 
-        with tf.name_scope(scope):
+            for i in range(self.state_ndim):
+                self.state_batch_shape_valid.append(self.state_shape[i])
+
+
             self.s = tf.placeholder(dtype=tf.float32,
                                      shape=self.state_batch_shape,
                                      name='s')
@@ -29,83 +36,7 @@ class DeepQN(object):
                                     shape=[None],
                                     name='r')
 
-            if type == 'v1':
-                self.h_last = self.s
-
-            if type == 'v3':
-                self.h1 = tf.layers.dense(inputs=self.s,
-                                         units=24,
-                                         activation=tf.nn.tanh,
-                                         use_bias=True,
-                                         kernel_initializer=tf.keras.initializers.glorot_uniform(),
-                                         bias_initializer=tf.zeros_initializer(),
-                                         name='h1',
-                                         trainable=True,
-                                         reuse=None)
-
-                self.h_last = tf.layers.dense(inputs=self.h1,
-                                         units=48,
-                                         activation=tf.nn.tanh,
-                                         use_bias=True,
-                                         kernel_initializer=tf.keras.initializers.glorot_uniform(),
-                                         bias_initializer=tf.zeros_initializer(),
-                                         name='h2',
-                                         trainable=True,
-                                         reuse=None)
-
-            if type == 'v4':
-                self.s_trans = tf.transpose(self.s, [0, 2, 3, 1])
-                self.h1 = tf.layers.conv2d(
-                    inputs=self.s_trans,
-                    filters=16,
-                    kernel_size=[8, 8],
-                    strides=(4, 4),
-                    padding="same",
-                    activation=tf.nn.relu,
-                    data_format='channels_last',
-                    name='h1')
-                self.h2 = tf.layers.conv2d(
-                    inputs=self.h1,
-                    filters=32,
-                    kernel_size=[4, 4],
-                    strides=(2, 2),
-                    padding="same",
-                    activation=tf.nn.relu,
-                    data_format='channels_last',
-                    name='h2')
-
-                self.h3 = tf.contrib.layers.flatten(
-                    inputs=self.h2,
-                    outputs_collections=None,
-                )
-
-                # dense layer automatically make the inputs flattened
-                self.h_last = tf.layers.dense(
-                    inputs=self.h3,
-                    units=256,
-                    activation=tf.nn.relu,
-                    use_bias=True,
-                    kernel_initializer=tf.keras.initializers.glorot_uniform(),
-                    bias_initializer=tf.zeros_initializer(),
-                    kernel_regularizer=None,
-                    bias_regularizer=None,
-                    activity_regularizer=None,
-                    trainable=True,
-                    name='h3',
-                    reuse=None
-                )
-
-            self.q = tf.layers.dense(inputs=self.h_last,
-                                     units=num_actions,
-                                     activation=None,
-                                     use_bias=True,
-                                     kernel_initializer=tf.keras.initializers.glorot_uniform(),
-                                     bias_initializer=tf.zeros_initializer(),
-                                     name='q',
-                                     trainable=True,
-                                     reuse=None)
-
-            # q_ is the selected q wrt a
+            self.q = self.core_graph(self.s, type=type, scope='')
             self.q_ = tf.placeholder(dtype=tf.float32,
                                      shape=[None],
                                      name='q_')
@@ -119,8 +50,106 @@ class DeepQN(object):
             self.target = tf.stop_gradient(target)
 
             self.loss = tf.reduce_mean(tf.squared_difference(self.target, self.estimate))
-
         return
+
+    def loss_graph(self, s, s_, r, a, done, gamma=0.99, scope='D'):
+        q  = self.core_graph(s, type=self.type, scope=self.scope)
+        q_ = self.core_graph(s_, type=self.type, scope=self.scope)
+        q_ = tf.reduce_max(q_)
+        tmp1 = tf.shape(a)
+        tmp2 = tmp1[0]
+        tmp3 = tf.range(tmp2, dtype=tf.int32)
+        tmp4 = [tmp3, a]
+        tmp5 = tf.stack(tmp4, axis=1)
+        a_indices = tf.stack([tf.range(tf.shape(self.a)[0], dtype=tf.int32), a], axis=1)
+        estimate = tf.gather_nd(params=q, indices=a_indices)
+        target = gamma * q_ + tf.where(done, 0, r)
+        loss = tf.reduce_mean(tf.squared_difference(target, estimate))
+        return loss
+
+    def train_op(self, loss, lr=0.0001, beta1=0.9, beta2=0.999, scope='C'):
+        return tf.train.AdamOptimizer(lr, beta1=beta1, beta2=beta2).minimize(loss)
+
+    def core_graph(self, s, type='v3', scope='B'):
+        with tf.variable_scope(scope, reuse=tf.AUTO_REUSE):
+
+
+
+            s = tf.reshape(s, shape=self.state_batch_shape_valid)
+
+
+
+            if type == 'v1':
+                h_last = s
+
+            if type == 'v3':
+                h1 = tf.layers.dense(inputs=s,
+                                      units=24,
+                                      activation=tf.nn.tanh,
+                                      use_bias=True,
+                                      kernel_initializer=tf.keras.initializers.glorot_uniform(),
+                                      bias_initializer=tf.zeros_initializer(),
+                                      name='h1',
+                                      trainable=True)
+
+                h_last = tf.layers.dense(inputs=h1,
+                                          units=48,
+                                          activation=tf.nn.tanh,
+                                          use_bias=True,
+                                          kernel_initializer=tf.keras.initializers.glorot_uniform(),
+                                          bias_initializer=tf.zeros_initializer(),
+                                          name='h2',
+                                          trainable=True)
+
+            if type == 'v4':
+                s_trans = tf.transpose(s, [0, 2, 3, 1])
+                h1 = tf.layers.conv2d(
+                    inputs=s_trans,
+                    filters=16,
+                    kernel_size=[8, 8],
+                    strides=(4, 4),
+                    padding="same",
+                    activation=tf.nn.relu,
+                    data_format='channels_last',
+                    name='h1')
+                h2 = tf.layers.conv2d(
+                    inputs=h1,
+                    filters=32,
+                    kernel_size=[4, 4],
+                    strides=(2, 2),
+                    padding="same",
+                    activation=tf.nn.relu,
+                    data_format='channels_last',
+                    name='h2')
+
+                h3 = tf.contrib.layers.flatten(
+                    inputs=h2,
+                    outputs_collections=None
+                )
+
+                # dense layer automatically make the inputs flattened
+                h_last = tf.layers.dense(
+                    inputs=h3,
+                    units=256,
+                    activation=tf.nn.relu,
+                    use_bias=True,
+                    kernel_initializer=tf.keras.initializers.glorot_uniform(),
+                    bias_initializer=tf.zeros_initializer(),
+                    kernel_regularizer=None,
+                    bias_regularizer=None,
+                    activity_regularizer=None,
+                    trainable=True,
+                    name='h_last'
+                )
+
+            return tf.layers.dense(inputs=h_last,
+                                   units=self.num_actions,
+                                   activation=None,
+                                   use_bias=True,
+                                   kernel_initializer=tf.keras.initializers.glorot_uniform(),
+                                   bias_initializer=tf.zeros_initializer(),
+                                   trainable=True)
+
 
     def reset_sess(self, sess):
         self.sess = sess
@@ -135,10 +164,6 @@ class DeepQN(object):
             state = state.reshape(tmp_shape)
         return self.sess.run(self.q, {self.s: state})
 
-    def predict_tf_register(self, state):
-        # state is a tensor
-        tf.assign(self.s, state)
-        return
 
     def select_action_greedy(self, state):
         q = self.predict(state)
@@ -159,9 +184,6 @@ class DeepQN(object):
                                       self.r: r,
                                       self.a: a})
         return
-
-    def train_tf_register(self, s, s_, r, a, done):
-        # TODO
 
     def save(self, path='./tmp/dqn_v2.ckpt'):
         saver = tf.train.Saver()
