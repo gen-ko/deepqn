@@ -15,7 +15,7 @@ from env_wrapper import EnvWrapper
 def main():
     print(tf.__version__)
     gpu_ops = tf.GPUOptions(allow_growth=True)
-    config = tf.ConfigProto(gpu_options=gpu_ops)
+    config = tf.ConfigProto(gpu_options=gpu_ops, log_device_placement=True)
     sess = tf.Session(config=config)
 
     env = EnvWrapper('CartPole-v0')
@@ -23,6 +23,8 @@ def main():
     mr = MemoryReplayer(env.state_shape, capacity=100000)
 
     # set type='v1' for linear model, 'v3' for three layer model (two tanh activations)
+
+    # type='v5' use dual
 
     qn = DeepQN(state_shape=env.state_shape, num_actions=env.num_actions, gamma=0.99, type='v3')
 
