@@ -34,7 +34,7 @@ class DeepQN(object):
                                 shape=[None],
                                 name='r')
 
-        self.q = self.core_graph(self.s, type=type, scope='')
+        self.q = self.core_graph(self.s, type=type)
         self.q_ = tf.placeholder(dtype=tf.float32,
                                  shape=[None],
                                  name='q_')

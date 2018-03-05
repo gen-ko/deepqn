@@ -45,7 +45,20 @@ def main():
     score = []
 
     for epi in range(1000000):
+
+        s_batch = []
+
+        s_new_batch = []
+
+        r_batch = []
+
+        a_batch = []
+
+        done_batch = []
+
         s = env.reset()
+
+        s_batch.append(s)
 
         done = False
 
@@ -56,9 +69,15 @@ def main():
 
             a_ = a[0]
 
+            a_batch.append(a_)
+
             s_, r, done, _ = env.step(a_)
 
-            mr.remember(s, s_, r, a_, done)
+            s_new_batch.append(s_)
+
+            r_batch.append(r)
+
+            done_batch.append(done)
 
             s = s_
 
@@ -66,11 +85,19 @@ def main():
 
         score.append(rc)
 
-        # replay
+        # no replay
 
-        s, s_, r, a, done = mr.replay(batch_size=64)
+        s_batch = np.array(s_batch)
 
-        qn.train(s, s_, r, a, done)
+        s_new_batch = np.array(s_new_batch)
+
+        r_batch = np.array(r_batch)
+
+        a_batch = np.array(a_batch)
+
+        done_batch = np.array(done_batch)
+
+        qn.train(s_batch, s_new_batch, r_batch, a_batch, done_batch)
 
         if (epi + 1) % 200 == 0:
             avg_score = np.mean(score)
@@ -78,7 +105,6 @@ def main():
             print('avg score last 200 episodes ', avg_score)
             score = []
             if avg_score > 195:
-                qn.save(path='./trained_model_linear_CartPole_w_mr.ckpt')
                 break
 
     return
@@ -86,6 +112,7 @@ def main():
 
 def get_eps(t):
     return max(0.01, 1.0 - np.log10(t + 1) * 0.995)
+
 
 if __name__ == '__main__':
     main()
