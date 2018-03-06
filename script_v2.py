@@ -68,6 +68,7 @@ def main():
             s = s_
 
             rc += r
+            cnt_iter += 1
             if (cnt_iter + 1) % 10000 == 0:
                 r_test = record(qn, sess, env)
                 print("Iteration {}, avg reward is {}".format(cnt_iter, r_test))
