@@ -12,7 +12,7 @@ from plotter import Plotter
 from env_wrapper import EnvWrapper
 
 
-def main():
+def train():
     print(tf.__version__)
     gpu_ops = tf.GPUOptions(allow_growth=True)
     config = tf.ConfigProto(gpu_options=gpu_ops, log_device_placement=False)
@@ -30,7 +30,7 @@ def main():
 
     # type='v5' use dual
 
-    qn = DeepQN(state_shape=env.state_shape, num_actions=env.num_actions, gamma=0.99, type='v1')
+    qn = DeepQN(state_shape=env.state_shape, num_actions=env.num_actions, gamma=0.99, type='v3')
 
     qn.reset_sess(sess)
 
@@ -102,6 +102,8 @@ def main():
 def get_eps(t):
     return max(0.01, 1.0 - np.log10(t + 1) * 0.995)
 
+def main():
+    train()
 
 if __name__ == '__main__':
     main()
