@@ -20,6 +20,9 @@ def train(args=None):
     env = EnvWrapper(env_name=args.env, mod_r=True)
     env_test = EnvWrapper(args.env, mod_r=False)
 
+    if args.use_mr:
+        print('Set experience replay ON')
+
     mr = MemoryReplayer(env.state_shape, capacity=args.mr_capacity, enabled=args.use_mr)
 
     # set type='v1' for linear model, 'v3' for three layer model (two tanh activations)
@@ -65,7 +68,8 @@ def train(args=None):
             rc += r
             cnt_iter += 1
             if (cnt_iter + 1) % 10000 == 0:
-                qn.save(args.model_path)
+                if args.quick_save:
+                    qn.save('./tmp/quick_save.ckpt')
                 reward_record.append(test.run(qn, sess))
 
         score.append(rc)
@@ -126,6 +130,7 @@ def parse_arguments():
     parser.add_argument('--batch_size', dest='batch_size', type=int, default=64)
     parser.add_argument('--tester_report_interval', dest='tester_report_interval', type=int, default=20)
     parser.add_argument('--tester_episodes', dest='tester_episodes', type=int, default=20)
+    parser.add_argument('--quick_save', dest='quick_save', type=int, default=1)
     return parser.parse_args()
 
 def main(argv):
