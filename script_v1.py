@@ -9,6 +9,8 @@ from deep_qn import DeepQN
 from tester import Tester
 from plotter import Plotter
 
+from collections import deque
+
 from env_wrapper import EnvWrapper
 
 
@@ -17,7 +19,7 @@ def train(args=None):
     config = tf.ConfigProto(gpu_options=gpu_ops, log_device_placement=False)
     sess = tf.Session(config=config)
 
-    env = EnvWrapper(args, mod_r=True, monitor=True)
+    env = EnvWrapper(args, mod_r=True)
     env_test = EnvWrapper(args, mod_r=False)
 
     if args.use_mr:
@@ -60,9 +62,9 @@ def train(args=None):
     pretrain_test.run(qn, sess)
     print('Pretrain test done.')
 
-    test = Tester(qn, env_test, episodes=args.tester_episodes, report_interval=args.tester_report_interval)
+    test = Tester(qn, env_test, episodes=args.performance_plot_episodes, report_interval=args.performance_plot_interval)
 
-    score = []
+    score = deque([], maxlen=args.performance_plot_episodes)
     reward_record = []
     cnt_iter = 0
 
@@ -99,7 +101,6 @@ def train(args=None):
             
         if (epi + 1) % args.performance_plot_interval == 0:
             plotter.plot(np.mean(score))
-            score = []
 
         if cnt_iter > args.max_iter:
             break
@@ -114,7 +115,7 @@ def test(args):
     gpu_ops = tf.GPUOptions(allow_growth=True)
     config = tf.ConfigProto(gpu_options=gpu_ops)
     sess = tf.Session(config=config)
-    env = EnvWrapper(args.env)
+    env = EnvWrapper(args)
     qn = DeepQN(state_shape=env.state_shape, num_actions=env.num_actions, gamma=args.gamma, type=args.qn_version)
     qn.reset_sess(sess)
     qn.load(args.model_path)
@@ -145,14 +146,15 @@ def parse_arguments():
     parser.add_argument('--max_iter', dest='max_iter', type=int, default=1000000)
     parser.add_argument('--max_episodes', dest='max_episodes', type=int, default=100000)
     parser.add_argument('--batch_size', dest='batch_size', type=int, default=64)
-    parser.add_argument('--tester_report_interval', dest='tester_report_interval', type=int, default=20)
-    parser.add_argument('--tester_episodes', dest='tester_episodes', type=int, default=20)
+    parser.add_argument('--tester_report_interval', dest='tester_report_interval', type=int, default=100)
+    parser.add_argument('--tester_episodes', dest='tester_episodes', type=int, default=100)
     parser.add_argument('--quick_save', dest='quick_save', type=int, default=1)
     parser.add_argument('--quick_save_interval', dest='quick_save_interval', type=int, default=200)
     parser.add_argument('--performance_plot_path', dest='performance_plot_path', type=str, default='./figure/perfplot.png')
     parser.add_argument('--performance_plot_interval', dest='performance_plot_interval', type=int, default=20)
-    parser.add_argument('--performance_plot_episodes', dest='performance_plot_episodes', type=int, default=100)
+    parser.add_argument('--performance_plot_episodes', dest='performance_plot_episodes', type=int, default=20)
     parser.add_argument('--reuse_model', dest='reuse_model', type=int, default=0)
+    parser.add_argument('--use_monitor', dest='use_monitor', type=int, default=0)
     return parser.parse_args()
 
 def main(argv):
@@ -174,7 +176,7 @@ def main(argv):
         return
     args.log_name = "{}_{}_data.log".format(args.env, qnum)
     args.qnum = qnum
-    args.model_path = "{}_{}_model".format(args.env, qnum)
+    args.model_path = "tmp/{}_{}_model".format(args.env, qnum)
     if args.train == 1:
         train(args)
     else:
