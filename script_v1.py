@@ -23,6 +23,7 @@ def main():
     sess = tf.Session(config=config)
 
     env = EnvWrapper('CartPole-v0')
+    env_test = EnvWrapper('CartPole-v0')
 
     mr = MemoryReplayer(env.state_shape, capacity=100000, enabled=False)
 
@@ -60,17 +61,13 @@ def main():
         while not done:
             a = qn.select_action_eps_greedy(get_eps(epi), s)
             a_ = a[0]
-
-
             s_, r, done, _ = env.step(a_)
-
             mr.remember(s, s_, r, a_, done)
-
             s = s_
             rc += r
             cnt_iter += 1
             if (cnt_iter + 1) % 10000 == 0:
-                reward_record.append(record(qn, sess, env))
+                reward_record.append(record(qn, sess, env_test))
 
         score.append(rc)
 
