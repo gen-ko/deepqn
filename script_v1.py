@@ -42,17 +42,14 @@ def train(args=None):
     pretrain_test.run(qn, sess)
     print('Pretrain test done.')
 
-    test = Tester(qn, env_test, 20, 20)
+    test = Tester(qn, env_test, episodes=args.tester_episodes, report_interval=args.tester_report_interval)
 
     score = []
     reward_record = []
     cnt_iter = 0
 
-    max_iter = args.max_iter
-    max_episodes = args.max_episodes
-    batch_size = args.batch_size
 
-    for epi in range(max_episodes):
+    for epi in range(args.max_episodes):
         s = env.reset()
 
         done = False
@@ -74,11 +71,11 @@ def train(args=None):
 
         # replay
 
-        s, s_, r, a, done = mr.replay(batch_size=batch_size)
+        s, s_, r, a, done = mr.replay(batch_size=args.batch_size)
 
         qn.train(s, s_, r, a, done)
 
-        if cnt_iter > max_iter:
+        if cnt_iter > args.max_iter:
             break
 
         # if (epi + 1) % 200 == 0:
@@ -88,8 +85,8 @@ def train(args=None):
         #     score = []
         #     if avg_score > 195:
         #         break
-    qn.save(model_path)
-    f = open(log_name, 'w')
+    qn.save(args.model_path)
+    f = open(args.log_name, 'w')
     f.write(str(reward_record))
     f.close()
     return
@@ -122,7 +119,7 @@ def parse_arguments():
     parser.add_argument('--env',dest='env',type=str, default='CartPole-v0')
     parser.add_argument('--render',dest='render',type=int,default=0)
     parser.add_argument('--train',dest='train',type=int,default=1)
-    parser.add_argument('--model',dest='model_file',type=str)
+    parser.add_argument('--model_path',dest='model_path',type=str, default='./tmp/blabla.ckpt')
     parser.add_argument('--use_mr', dest='use_mr', type=int, default=1)
     parser.add_argument('--mr_capacity', dest='mr_capacity', type=int, default=100000)
     parser.add_argument('--gamma', dest='gamma', type=float, default=1.0)
@@ -133,34 +130,34 @@ def parse_arguments():
     parser.add_argument('--max_iter', dest='max_iter', type=int, default=1000000)
     parser.add_argument('--max_episodes', dest='max_episodes', type=int, default=100000)
     parser.add_argument('--batch_size', dest='batch_size', type=int, default=64)
+    parser.add_argument('--tester_report_interval', dest='tester_report_interval', type=int, default=20)
+    parser.add_argument('--tester_episodes', dest='tester_episodes', type=int, default=20)
     return parser.parse_args()
 
 def main(argv):
     # parse arguments
     args = parse_arguments()
 
-    env_name = args.env
-    has_memrory = args.use_mr == 1
-
-    qn_ver = 'v1'
-    if not has_memrory and qn_ver == 'v1':
-        log_name = "{}-v0_q1_data.log".format(env_name)
-        model_path = "tmp/{}-v0_q1_model".format(env_name)
-    elif has_memrory and qn_ver == 'v1':
-        log_name = "{}-v0_q2_data.log".format(env_name)
-        model_path = "tmp/{}-v0_q2_model".format(env_name)
-    elif has_memrory and qn_ver == 'v3':
-        log_name = "{}-v0_q3_data.log".format(env_name)
-        model_path = "tmp/{}-v0_q3_model".format(env_name)
-    elif has_memrory and qn_ver == 'v5':
-        log_name = "{}-v0_q4_data.log".format(env_name)
-        model_path = "tmp/{}-v0_q4_model".format(env_name)
-    elif has_memrory and qn_ver == 'v4' and env_name == 'SpaceInvaders-v0':
-        log_name = "{}-v0_q5_data.log".format(env_name)
-        model_path = "tmp/{}-v0_q5_model".format(env_name)
+    if args.use_mr == 0 and args.qn_version == 'v1':
+        log_name = "{}-v0_q1_data.log".format(args.env)
+        model_path = "tmp/{}-v0_q1_model".format(args.env)
+    elif args.use_mr == 1 and args.qn_version == 'v1':
+        log_name = "{}-v0_q2_data.log".format(args.env)
+        model_path = "tmp/{}-v0_q2_model".format(args.env)
+    elif args.use_mr == 1 and args.qn_version == 'v3':
+        log_name = "{}-v0_q3_data.log".format(args.env)
+        model_path = "tmp/{}-v0_q3_model".format(args.env)
+    elif args.use_mr == 1 and args.qn_version == 'v5':
+        log_name = "{}-v0_q4_data.log".format(args.env)
+        model_path = "tmp/{}-v0_q4_model".format(args.env)
+    elif args.use_mr == 1 and args.qn_version == 'v4' and args.env == 'SpaceInvaders-v0':
+        log_name = "{}-v0_q5_data.log".format(args.env)
+        model_path = "tmp/{}-v0_q5_model".format(args.env)
     else:
         print("Wrong settings!")
         return
+    args.log_name = log_name
+    args.model_path = model_path
     train(args)
     #test(env_name, model_path, is_render)
 
