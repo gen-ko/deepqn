@@ -7,10 +7,11 @@ TF_FLOAT_TYPE = tf.float32
 TF_INT_TYPE = tf.int32
 
 class MemoryReplayer(object):
-    def __init__(self, state_shape, capacity: int=100000):
+    def __init__(self, state_shape, capacity: int=100000, enabled=False):
         self.capacity = capacity
         self.state_shape = state_shape
         self.state_ndim = len(self.state_shape)
+        self.enabled = enabled
 
         self.tensor_shape = [capacity]
         for i in range(self.state_ndim):
@@ -24,18 +25,36 @@ class MemoryReplayer(object):
 
         self.used_counter = 64
         self.mem_counter = 0
+        self.reset_flag = False
         return
 
     def remember(self, s, s_, r, a, done):
+        if self.enabled:
+            self.s[self.mem_counter] = s
+            self.s_[self.mem_counter] = s_
+            self.r[self.mem_counter] = r
+            self.a[self.mem_counter] = a
+            self.done[self.mem_counter] = done
+            self.mem_counter = (self.mem_counter + 1) % self.capacity
+            if self.used_counter < self.capacity:
+                self.used_counter += 1
+        else:
+            if self.reset_flag:
+                self.mem_counter = 0
+                self.used_counter = 0
+            self.reset_flag = False
+            self.s[self.mem_counter] = s
+            self.s_[self.mem_counter] = s_
+            self.r[self.mem_counter] = r
+            self.a[self.mem_counter] = a
+            self.done[self.mem_counter] = done
+            self.mem_counter = (self.mem_counter + 1) % self.capacity
+            if self.used_counter < self.capacity:
+                self.used_counter += 1
+            if done:
+                self.reset_flag = True
 
-        self.s[self.mem_counter] = s
-        self.s_[self.mem_counter] = s_
-        self.r[self.mem_counter] = r
-        self.a[self.mem_counter] = a
-        self.done[self.mem_counter] = done
-        self.mem_counter = (self.mem_counter + 1) % self.capacity
-        if self.used_counter < self.capacity:
-            self.used_counter += 1
+
 
     def replay(self, batch_size):
         batch_idx = np.random.randint(low=0, high=self.used_counter, size=min(batch_size, self.used_counter), dtype=np.int32)

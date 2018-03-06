@@ -20,7 +20,7 @@ def main():
 
     env = EnvWrapper('CartPole-v0')
 
-    mr = MemoryReplayer(env.state_shape, capacity=100000)
+    mr = MemoryReplayer(env.state_shape, capacity=100000, enabled=True)
 
     # set type='v1' for linear model, 'v3' for three layer model (two tanh activations)
 

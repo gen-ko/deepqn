@@ -20,7 +20,7 @@ def main():
 
     env = EnvWrapper('CartPole-v0')
 
-    mr = MemoryReplayer(env.state_shape, capacity=100000)
+    mr = MemoryReplayer(env.state_shape, capacity=100000, enabled=False)
 
     # set type='v1' for linear model, 'v3' for three layer model (two tanh activations)
 
@@ -45,20 +45,7 @@ def main():
     score = []
 
     for epi in range(1000000):
-
-        s_batch = []
-
-        s_new_batch = []
-
-        r_batch = []
-
-        a_batch = []
-
-        done_batch = []
-
         s = env.reset()
-
-        s_batch.append(s)
 
         done = False
 
@@ -69,15 +56,9 @@ def main():
 
             a_ = a[0]
 
-            a_batch.append(a_)
-
             s_, r, done, _ = env.step(a_)
 
-            s_new_batch.append(s_)
-
-            r_batch.append(r)
-
-            done_batch.append(done)
+            mr.remember(s, s_, r, a_, done)
 
             s = s_
 
@@ -85,19 +66,11 @@ def main():
 
         score.append(rc)
 
-        # no replay
+        # replay
 
-        s_batch = np.array(s_batch)
+        s, s_, r, a, done = mr.replay(batch_size=64)
 
-        s_new_batch = np.array(s_new_batch)
-
-        r_batch = np.array(r_batch)
-
-        a_batch = np.array(a_batch)
-
-        done_batch = np.array(done_batch)
-
-        qn.train(s_batch, s_new_batch, r_batch, a_batch, done_batch)
+        qn.train(s, s_, r, a, done)
 
         if (epi + 1) % 200 == 0:
             avg_score = np.mean(score)
