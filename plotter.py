@@ -3,14 +3,15 @@ import numpy as np
 from collections import deque
 
 class Plotter(object):
-    def __init__(self, fig_num=0, capacity=20000, title_text='reward figure', save_path='./figure/v1',
-                 show_figure=False):
+    def __init__(self, fig_num=0, capacity=20000, save_path='./figure/v1',
+                 show_figure=False, interval=100):
         self.fig_num = fig_num
         self.x = deque(iterable=[], maxlen=capacity)
         self.t = deque(iterable=[], maxlen=capacity)
         self.show_figure = show_figure
         self.t_now = 0
-        self.title_text = title_text
+        self.interval = interval
+        self.title_text = 'Average Reward per {interval} Episodes'.format(interval=self.interval)
         self.save_path = save_path
         return
 
@@ -18,11 +19,11 @@ class Plotter(object):
         plt.figure(self.fig_num)
         self.x.append(x)
         self.t.append(self.t_now)
-        self.t_now += 1
-        line_1, = plt.plot(self.t, self.x, label='reward')
+        self.t_now += self.interval
+        line_1, = plt.plot(self.t, self.x, label='line_0')
         plt.legend(handles=[line_1])
-        plt.xlabel('time step')
-        plt.ylabel('reward')
+        plt.xlabel('Episode')
+        plt.ylabel('Reward')
         plt.title(self.title_text)
         plt.savefig(self.save_path)
         plt.close(self.fig_num)
