@@ -18,8 +18,8 @@ def train(env_name, has_memrory, qn_ver, log_name):
     config = tf.ConfigProto(gpu_options=gpu_ops, log_device_placement=False)
     sess = tf.Session(config=config)
 
-    env = EnvWrapper(env_name)
-    env_test = EnvWrapper(env_name)
+    env = EnvWrapper(env_name, mod_r=True)
+    env_test = EnvWrapper(env_name, mod_r=False)
 
     mr = MemoryReplayer(env.state_shape, capacity=100000, enabled=has_memrory)
 
@@ -92,8 +92,29 @@ def train(env_name, has_memrory, qn_ver, log_name):
     f.close()
     return
 
+<<<<<<< HEAD
 def test(env_name, model_path):
     pass
+=======
+def test(render=False, path='./tmp/dqn_v3.ckpt', episodes=100):
+    gpu_ops = tf.GPUOptions(allow_growth=True)
+    config = tf.ConfigProto(gpu_options=gpu_ops)
+    sess = tf.Session(config=config)
+
+    qn = DeepQN(state_shape=(2,), num_actions=3, gamma=0.99)
+
+    qn.reset_sess(sess)
+
+    qn.load(path)
+
+    env = gym.make('MountainCar-v0')
+
+    testor = Tester(qn, env, report_interval=100, episodes=episodes)
+
+    testor.run(qn, sess, render=render)
+
+    return
+>>>>>>> 6e099bb2ea59d310e9fb3aa09f8ae4a0dda44b5b
 
 def get_eps(t):
     return max(0.01, 1.0 - np.log10(t + 1) * 0.995)
