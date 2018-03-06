@@ -86,13 +86,13 @@ def train(env_name, has_memrory, qn_ver, log_name, model_path):
         #     score = []
         #     if avg_score > 195:
         #         break
-
+    qn.save(model_path)
     f = open(log_name, 'w')
     f.write(str(reward_record))
     f.close()
     return
 
-def test(env_name, path, render=False, episodes=100):
+def test(env_name, model_path, render=False, episodes=100):
     gpu_ops = tf.GPUOptions(allow_growth=True)
     config = tf.ConfigProto(gpu_options=gpu_ops)
     sess = tf.Session(config=config)
@@ -101,7 +101,7 @@ def test(env_name, path, render=False, episodes=100):
 
     qn.reset_sess(sess)
 
-    qn.load(path)
+    qn.load(model_path)
 
     env = gym.make(env_name)
 
@@ -137,7 +137,7 @@ def main():
         print("Wrong settings!")
         return
     is_render = False
-    train(env_name, has_memrory, qn_ver, log_name)
+    train(env_name, has_memrory, qn_ver, log_name, model_path)
     test(env_name, model_path, is_render)
 
 if __name__ == '__main__':
