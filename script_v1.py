@@ -19,7 +19,7 @@ def train(args=None):
     config = tf.ConfigProto(gpu_options=gpu_ops, log_device_placement=False)
     sess = tf.Session(config=config)
 
-    env = EnvWrapper(args, mod_r=True, monitor=True)
+    env = EnvWrapper(args, mod_r=True)
     env_test = EnvWrapper(args, mod_r=False)
 
     if args.use_mr:
