@@ -11,6 +11,9 @@ from plotter import Plotter
 
 from env_wrapper import EnvWrapper
 
+def record(qn, sess, env):
+    test = Tester(qn, env, 20, 20)
+    return test.run(qn, sess)
 
 def main():
     print(tf.__version__)
@@ -43,6 +46,8 @@ def main():
     testor.run(qn, sess)
 
     score = []
+    reward_record = []
+    cnt_iter = 0
 
     for epi in range(1000000):
         s = env.reset()
@@ -63,6 +68,11 @@ def main():
             s = s_
 
             rc += r
+            cnt_iter += 1
+            if (cnt_iter + 1) % 10000 == 0:
+                r_test = record(qn, sess, env)
+                print("Iteration {}, avg reward is {}".format(cnt_iter, r_test))
+                reward_record.append(r_test)
 
         score.append(rc)
 
@@ -72,15 +82,20 @@ def main():
 
         qn.train(s, s_, r, a, done)
 
-        if (epi + 1) % 200 == 0:
-            avg_score = np.mean(score)
-            plotter.plot(avg_score)
-            print('avg score last 200 episodes ', avg_score)
-            score = []
-            if avg_score > 195:
-                qn.save(path='./trained_model_linear_CartPole_w_mr.ckpt')
-                break
+        if cnt_iter > 1000000:
+            break
 
+        # if (epi + 1) % 200 == 0:
+        #     avg_score = np.mean(score)
+        #     plotter.plot(avg_score)
+        #     print('avg score last 200 episodes ', avg_score)
+        #     score = []
+        #     if avg_score > 195:
+        #         qn.save(path='./trained_model_linear_CartPole_w_mr.ckpt')
+        #         break
+    f = open('CartPole-v0_q2_data.log', 'w')
+    f.write(str(reward_record))
+    f.close()
     return
 
 
