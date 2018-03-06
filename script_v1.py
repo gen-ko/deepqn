@@ -22,6 +22,13 @@ def train(args=None):
 
     if args.use_mr:
         print('Set experience replay ON')
+    else:
+        print('Set experience replay OFF')
+
+    if args.quick_save:
+        print('Set quick save        ON')
+    else:
+        print('Set quick save        OFF')
 
     mr = MemoryReplayer(env.state_shape, capacity=args.mr_capacity, enabled=args.use_mr)
 
@@ -36,10 +43,13 @@ def train(args=None):
 
     qn.set_train(lr=args.lr, beta1=args.beta1, beta2=args.beta2)
 
-    init = tf.global_variables_initializer()
-    sess.run(init)
+    if not args.reuse_model:
+        init = tf.global_variables_initializer()
+        sess.run(init)
+    else:
+        qn.load(args.model_path)
 
-    plotter = Plotter()
+    plotter = Plotter(save_path=args.performance_plot_path, interval=args.performance_plot_episodes)
 
     pretrain_test = Tester(qn, env, report_interval=100)
     print('Pretrain test:')
@@ -80,7 +90,7 @@ def train(args=None):
 
         qn.train(s, s_, r, a, done)
 
-        if (epi + 1) % args.quick_save_interval == 0:
+        if (epi + 1) % args.quick_save_interval == 0 and args.quick_save:
             qn.save('./tmp/quick_save.ckpt')
             
         if (epi + 1) % args.performance_plot_interval == 0:
@@ -90,13 +100,6 @@ def train(args=None):
         if cnt_iter > args.max_iter:
             break
 
-        # if (epi + 1) % 200 == 0:
-        #     avg_score = np.mean(score)
-        #     plotter.plot(avg_score)
-        #     print('avg score last 200 episodes ', avg_score)
-        #     score = []
-        #     if avg_score > 195:
-        #         break
     qn.save(args.model_path)
     f = open(args.log_name, 'w')
     f.write(str(reward_record))
@@ -143,7 +146,9 @@ def parse_arguments():
     parser.add_argument('--quick_save', dest='quick_save', type=int, default=1)
     parser.add_argument('--quick_save_interval', dest='quick_save_interval', type=int, default=200)
     parser.add_argument('--performance_plot_path', dest='performance_plot_path', type=str, default='./figure/perfplot.png')
-    parser.add_argument('--performance_plot_interval', dest='performance_plot_interval', type=int, default=10)
+    parser.add_argument('--performance_plot_interval', dest='performance_plot_interval', type=int, default=20)
+    parser.add_argument('--performance_plot_episodes', dest='performance_plot_episodes', type=int, default=100)
+    parser.add_argument('--reuse_model', dest='reuse_model', type=int, default=0)
     return parser.parse_args()
 
 def main(argv):
@@ -170,7 +175,6 @@ def main(argv):
         train(args)
     else:
         test(args)
-    #test(env_name, model_path, is_render)
 
 if __name__ == '__main__':
     main(sys.argv)
