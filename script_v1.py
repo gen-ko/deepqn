@@ -93,10 +93,10 @@ def train(env_name, has_memrory, qn_ver, log_name):
     return
 
 <<<<<<< HEAD
-def test(env_name, model_path):
+def test():
     pass
 =======
-def test(render=False, path='./tmp/dqn_v3.ckpt', episodes=100):
+def test(env_name, path, render=False, episodes=100):
     gpu_ops = tf.GPUOptions(allow_growth=True)
     config = tf.ConfigProto(gpu_options=gpu_ops)
     sess = tf.Session(config=config)
@@ -107,14 +107,13 @@ def test(render=False, path='./tmp/dqn_v3.ckpt', episodes=100):
 
     qn.load(path)
 
-    env = gym.make('MountainCar-v0')
+    env = gym.make(env_name)
 
     testor = Tester(qn, env, report_interval=100, episodes=episodes)
 
     testor.run(qn, sess, render=render)
 
     return
->>>>>>> 6e099bb2ea59d310e9fb3aa09f8ae4a0dda44b5b
 
 def get_eps(t):
     return max(0.01, 1.0 - np.log10(t + 1) * 0.995)
@@ -141,8 +140,9 @@ def main():
     else:
         print("Wrong settings!")
         return
+    is_render = False
     train(env_name, has_memrory, qn_ver, log_name)
-    test(env_name, model_path)
+    test(env_name, model_path, is_render)
 
 if __name__ == '__main__':
     main()
