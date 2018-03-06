@@ -92,10 +92,6 @@ def train(env_name, has_memrory, qn_ver, log_name):
     f.close()
     return
 
-<<<<<<< HEAD
-def test():
-    pass
-=======
 def test(env_name, path, render=False, episodes=100):
     gpu_ops = tf.GPUOptions(allow_growth=True)
     config = tf.ConfigProto(gpu_options=gpu_ops)
