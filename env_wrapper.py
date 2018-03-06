@@ -6,9 +6,9 @@ from image_preprocessing import image_prep
 from gym import wrappers
 
 class EnvWrapper(object):
-    def __init__(self, args, mod_r=False, monitor=False):
+    def __init__(self, args, mod_r=False):
         self.env_name = args.env
-        if monitor:
+        if args.use_monitor:
             self.env = wrappers.Monitor(gym.make(self.env_name), 'tmp/{}_{}_record'.format(args.env, args.qnum))
         else:
             self.env = gym.make(self.env_name)

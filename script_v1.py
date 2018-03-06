@@ -9,6 +9,8 @@ from deep_qn import DeepQN
 from tester import Tester
 from plotter import Plotter
 
+from collections import deque
+
 from env_wrapper import EnvWrapper
 
 
@@ -62,7 +64,7 @@ def train(args=None):
 
     test = Tester(qn, env_test, episodes=args.tester_episodes, report_interval=args.tester_report_interval)
 
-    score = []
+    score = deque([], maxlen=args.performance_plot_episodes)
     reward_record = []
     cnt_iter = 0
 
@@ -99,7 +101,6 @@ def train(args=None):
             
         if (epi + 1) % args.performance_plot_interval == 0:
             plotter.plot(np.mean(score))
-            score = []
 
         if cnt_iter > args.max_iter:
             break
@@ -153,6 +154,7 @@ def parse_arguments():
     parser.add_argument('--performance_plot_interval', dest='performance_plot_interval', type=int, default=20)
     parser.add_argument('--performance_plot_episodes', dest='performance_plot_episodes', type=int, default=100)
     parser.add_argument('--reuse_model', dest='reuse_model', type=int, default=0)
+    parser.add_argument('--use_monitor', dest='use_monitor', type=int, default=0)
     return parser.parse_args()
 
 def main(argv):
