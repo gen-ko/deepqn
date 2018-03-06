@@ -138,20 +138,20 @@ def main(argv):
     args = parse_arguments()
 
     if args.use_mr == 0 and args.qn_version == 'v1':
-        log_name = "{}-v0_q1_data.log".format(args.env)
-        model_path = "tmp/{}-v0_q1_model".format(args.env)
+        log_name = "{}_q1_data.log".format(args.env)
+        model_path = "tmp/{}_q1_model".format(args.env)
     elif args.use_mr == 1 and args.qn_version == 'v1':
-        log_name = "{}-v0_q2_data.log".format(args.env)
-        model_path = "tmp/{}-v0_q2_model".format(args.env)
+        log_name = "{}_q2_data.log".format(args.env)
+        model_path = "tmp/{}_q2_model".format(args.env)
     elif args.use_mr == 1 and args.qn_version == 'v3':
-        log_name = "{}-v0_q3_data.log".format(args.env)
-        model_path = "tmp/{}-v0_q3_model".format(args.env)
+        log_name = "{}_q3_data.log".format(args.env)
+        model_path = "tmp/{}_q3_model".format(args.env)
     elif args.use_mr == 1 and args.qn_version == 'v5':
-        log_name = "{}-v0_q4_data.log".format(args.env)
-        model_path = "tmp/{}-v0_q4_model".format(args.env)
+        log_name = "{}_q4_data.log".format(args.env)
+        model_path = "tmp/{}_q4_model".format(args.env)
     elif args.use_mr == 1 and args.qn_version == 'v4' and args.env == 'SpaceInvaders-v0':
-        log_name = "{}-v0_q5_data.log".format(args.env)
-        model_path = "tmp/{}-v0_q5_model".format(args.env)
+        log_name = "{}_q5_data.log".format(args.env)
+        model_path = "tmp/{}q_q5_model".format(args.env)
     else:
         print("Wrong settings!")
         return
