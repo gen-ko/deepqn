@@ -101,3 +101,4 @@ tmp/
 trained/
 log
 pt/
+*.png
