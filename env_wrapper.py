@@ -11,7 +11,7 @@ class EnvWrapper(object):
         if monitor:
             self.env = wrappers.Monitor(gym.make(self.env_name), 'tmp/{}_{}_record'.format(args.env, args.qnum))
         else:
-            self.evn = gym.make(self.env_name)
+            self.env = gym.make(self.env_name)
         self.num_actions = self.env.action_space.n
         self.state_shape = self.env.observation_space.shape
         self.frame_stack = None
