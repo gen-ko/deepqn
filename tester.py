@@ -16,6 +16,7 @@ class Tester(object):
         report_counter: int = 0
         r_sum_avg = 0.0
         return_value = 0.0
+        r_per_epi = []
         for epi in range(self.episodes):
             s = self.env.reset()
             if render:
@@ -33,6 +34,7 @@ class Tester(object):
                 s = s_
 
                 if is_terminal:
+                    r_per_epi.append(r)
                     r_sum_avg += r_sum / self.report_interval
                     report_counter += 1
                     if report_counter % self.report_interval == 0:
@@ -40,8 +42,5 @@ class Tester(object):
                         return_value = r_sum_avg
                         r_sum_avg = 0.0
                         report_counter = 0
-        return return_value
-
-
-
+        return return_value, r_per_epi
 

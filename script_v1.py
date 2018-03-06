@@ -71,8 +71,9 @@ def train(args=None):
             s = s_
             rc += r
             cnt_iter += 1
-            if (cnt_iter + 1) % 10000 == 0:
-                reward_record.append(test.run(qn, sess))
+            if (cnt_iter + 1) % 1000 == 0:
+                r_avg, _ = test.run(qn, sess)
+                reward_record.append(r_avg)
 
         score.append(rc)
 
@@ -107,7 +108,10 @@ def test(args):
     qn.reset_sess(sess)
     qn.load(args.model_path)
     testor = Tester(qn, env, report_interval=args.tester_report_interval, episodes=args.tester_episodes)
-    testor.run(qn, sess, render=args.render)
+    _, rs = testor.run(qn, sess, render=args.render)
+    f = open(args.model_path+'_test.log', 'w')
+    f.write(str(rs))
+    f.close()
     return
 
 def get_eps(t):
