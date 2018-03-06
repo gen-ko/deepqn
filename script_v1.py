@@ -18,11 +18,13 @@ def main():
     config = tf.ConfigProto(gpu_options=gpu_ops, log_device_placement=False)
     sess = tf.Session(config=config)
 
-    env = EnvWrapper('CartPole-v0')
-    env_test = EnvWrapper('CartPole-v0')
-    test = Tester(qn, env_test, 20, 20)
+    env_name = 'CartPole-v0'
+    has_memrory = False
 
-    mr = MemoryReplayer(env.state_shape, capacity=100000, enabled=False)
+    env = EnvWrapper(env_name)
+    env_test = EnvWrapper(env_name)
+
+    mr = MemoryReplayer(env.state_shape, capacity=100000, enabled=has_memrory)
 
     # set type='v1' for linear model, 'v3' for three layer model (two tanh activations)
 
@@ -39,10 +41,12 @@ def main():
 
     plotter = Plotter()
 
-    testor = Tester(qn, env, report_interval=100)
-
+    pretrain_test = Tester(qn, env, report_interval=100)
     print('Pretrain test:')
-    testor.run(qn, sess)
+    pretrain_test.run(qn, sess)
+    print('Pretrain test done.')
+
+    test = Tester(qn, env_test, 20, 20)
 
     score = []
     reward_record = []
@@ -85,7 +89,11 @@ def main():
         #     if avg_score > 195:
         #         break
 
-    f = open('CartPole-v0_q1_data.log', 'w')
+    if has_memrory:
+        log_name = "{}-v0_q2_data.log".format(env_name)
+    else:
+        log_name = "{}-v0_q1_data.log".format(env_name)
+    f = open(log_name, 'w')
     f.write(str(reward_record))
     f.close()
     return
