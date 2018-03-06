@@ -92,23 +92,16 @@ def train(args=None):
     f.close()
     return
 
-def test(env_name, model_path, render=False, episodes=100):
+def test(args):
     gpu_ops = tf.GPUOptions(allow_growth=True)
     config = tf.ConfigProto(gpu_options=gpu_ops)
     sess = tf.Session(config=config)
-
-    qn = DeepQN(state_shape=(2,), num_actions=3, gamma=0.99)
-
+    env = EnvWrapper(args.env)
+    qn = DeepQN(state_shape=env.state_shape, num_actions=env.num_actions, gamma=args.gamma, type=args.qn_version)
     qn.reset_sess(sess)
-
-    qn.load(model_path)
-
-    env = gym.make(env_name)
-
-    testor = Tester(qn, env, report_interval=100, episodes=episodes)
-
-    testor.run(qn, sess, render=render)
-
+    qn.load(args.model_path)
+    testor = Tester(qn, env, report_interval=args.tester_report_interval, episodes=args.tester_episodes)
+    testor.run(qn, sess, render=args.render)
     return
 
 def get_eps(t):
@@ -159,7 +152,10 @@ def main(argv):
         return
     args.log_name = log_name
     args.model_path = model_path
-    train(args)
+    if args.train == 1:
+        train(args)
+    else:
+        test(args)
     #test(env_name, model_path, is_render)
 
 if __name__ == '__main__':
