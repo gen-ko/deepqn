@@ -22,6 +22,13 @@ def train(args=None):
 
     if args.use_mr:
         print('Set experience replay ON')
+    else:
+        print('Set experience replay OFF')
+
+    if args.quick_save:
+        print('Set quick save        ON')
+    else:
+        print('Set quick save        OFF')
 
     mr = MemoryReplayer(env.state_shape, capacity=args.mr_capacity, enabled=args.use_mr)
 
@@ -83,10 +90,10 @@ def train(args=None):
 
         qn.train(s, s_, r, a, done)
 
-        if (epi + 1) % args.quick_save_interval == 0:
+        if (epi + 1) % args.quick_save_interval == 0 and args.quick_save:
             qn.save('./tmp/quick_save.ckpt')
             
-        if (epi + 1) % args.performance_plot_interval == 0:
+        if (epi + 1) % args.performance_plot_episodes == 0:
             plotter.plot(np.mean(score))
             score = []
 
@@ -139,7 +146,8 @@ def parse_arguments():
     parser.add_argument('--quick_save', dest='quick_save', type=int, default=1)
     parser.add_argument('--quick_save_interval', dest='quick_save_interval', type=int, default=200)
     parser.add_argument('--performance_plot_path', dest='performance_plot_path', type=str, default='./figure/perfplot.png')
-    parser.add_argument('--performance_plot_interval', dest='performance_plot_interval', type=int, default=100)
+    parser.add_argument('--performance_plot_interval', dest='performance_plot_interval', type=int, default=20)
+    parser.add_argument('--performance_plot_episodes', dest='performance_plot_episodes', type=int, default=100)
     parser.add_argument('--reuse_model', dest='reuse_model', type=int, default=0)
     return parser.parse_args()
 
@@ -171,7 +179,6 @@ def main(argv):
         train(args)
     else:
         test(args)
-    #test(env_name, model_path, is_render)
 
 if __name__ == '__main__':
     main(sys.argv)

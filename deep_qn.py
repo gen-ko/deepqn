@@ -86,7 +86,7 @@ class DeepQN(object):
                 strides=(4, 4),
                 padding="same",
                 activation=tf.nn.relu,
-                data_format='core_graph_channels_last',
+                data_format='channels_last',
                 name='h1')
             h2 = tf.layers.conv2d(
                 inputs=h1,
