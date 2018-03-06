@@ -4,14 +4,15 @@ from collections import deque
 
 class Plotter(object):
     def __init__(self, fig_num=0, capacity=20000, save_path='./figure/v1',
-                 show_figure=False, interval=100):
+                 show_figure=False, interval=100, episodes=100):
         self.fig_num = fig_num
         self.x = deque(iterable=[], maxlen=capacity)
         self.t = deque(iterable=[], maxlen=capacity)
         self.show_figure = show_figure
         self.t_now = 0
         self.interval = interval
-        self.title_text = 'Average Reward per {interval} Episodes'.format(interval=self.interval)
+        self.episodes = episodes
+        self.title_text = 'Average Reward per {interval} Episodes'.format(interval=self.episodes)
         self.save_path = save_path
         return
 

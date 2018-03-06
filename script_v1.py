@@ -43,13 +43,17 @@ def train(args=None):
 
     qn.set_train(lr=args.lr, beta1=args.beta1, beta2=args.beta2)
 
+
     if not args.reuse_model:
+        print('Set reuse model      OFF')
         init = tf.global_variables_initializer()
         sess.run(init)
     else:
+        print('Set reuse model      ON')
         qn.load(args.model_path)
 
-    plotter = Plotter(save_path=args.performance_plot_path, interval=args.performance_plot_episodes)
+    plotter = Plotter(save_path=args.performance_plot_path, interval=args.performance_plot_interval,
+                      episodes=args.performance_plot_episodes)
 
     pretrain_test = Tester(qn, env, report_interval=100)
     print('Pretrain test:')
