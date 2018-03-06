@@ -11,10 +11,6 @@ from plotter import Plotter
 
 from env_wrapper import EnvWrapper
 
-def record(qn, sess, env):
-    test = Tester(qn, env, 20, 20)
-    return test.run(qn, sess)
-
 
 def main():
     print(tf.__version__)
@@ -24,6 +20,7 @@ def main():
 
     env = EnvWrapper('CartPole-v0')
     env_test = EnvWrapper('CartPole-v0')
+    test = Tester(qn, env_test, 20, 20)
 
     mr = MemoryReplayer(env.state_shape, capacity=100000, enabled=False)
 
@@ -67,7 +64,7 @@ def main():
             rc += r
             cnt_iter += 1
             if (cnt_iter + 1) % 10000 == 0:
-                reward_record.append(record(qn, sess, env_test))
+                reward_record.append(test.run(qn, sess))
 
         score.append(rc)
 
