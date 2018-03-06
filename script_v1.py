@@ -20,6 +20,9 @@ def train(args=None):
     env = EnvWrapper(env_name=args.env, mod_r=True)
     env_test = EnvWrapper(args.env, mod_r=False)
 
+    if args.use_mr:
+        print('Set experience replay ON')
+
     mr = MemoryReplayer(env.state_shape, capacity=args.mr_capacity, enabled=args.use_mr)
 
     # set type='v1' for linear model, 'v3' for three layer model (two tanh activations)
@@ -65,7 +68,8 @@ def train(args=None):
             rc += r
             cnt_iter += 1
             if (cnt_iter + 1) % 10000 == 0:
-                qn.save(args.model_path)
+                if args.quick_save:
+                    qn.save('./tmp/quick_save.ckpt')
                 reward_record.append(test.run(qn, sess))
 
         score.append(rc)
@@ -92,23 +96,16 @@ def train(args=None):
     f.close()
     return
 
-def test(env_name, model_path, render=False, episodes=100):
+def test(args):
     gpu_ops = tf.GPUOptions(allow_growth=True)
     config = tf.ConfigProto(gpu_options=gpu_ops)
     sess = tf.Session(config=config)
-
-    qn = DeepQN(state_shape=(2,), num_actions=3, gamma=0.99)
-
+    env = EnvWrapper(args.env)
+    qn = DeepQN(state_shape=env.state_shape, num_actions=env.num_actions, gamma=args.gamma, type=args.qn_version)
     qn.reset_sess(sess)
-
-    qn.load(model_path)
-
-    env = gym.make(env_name)
-
-    testor = Tester(qn, env, report_interval=100, episodes=episodes)
-
-    testor.run(qn, sess, render=render)
-
+    qn.load(args.model_path)
+    testor = Tester(qn, env, report_interval=args.tester_report_interval, episodes=args.tester_episodes)
+    testor.run(qn, sess, render=args.render)
     return
 
 def get_eps(t):
@@ -133,6 +130,7 @@ def parse_arguments():
     parser.add_argument('--batch_size', dest='batch_size', type=int, default=64)
     parser.add_argument('--tester_report_interval', dest='tester_report_interval', type=int, default=20)
     parser.add_argument('--tester_episodes', dest='tester_episodes', type=int, default=20)
+    parser.add_argument('--quick_save', dest='quick_save', type=int, default=1)
     return parser.parse_args()
 
 def main(argv):
@@ -159,7 +157,10 @@ def main(argv):
         return
     args.log_name = log_name
     args.model_path = model_path
-    train(args)
+    if args.train == 1:
+        train(args)
+    else:
+        test(args)
     #test(env_name, model_path, is_render)
 
 if __name__ == '__main__':
