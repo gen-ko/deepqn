@@ -49,7 +49,7 @@ def train(args=None):
     else:
         qn.load(args.model_path)
 
-    plotter = Plotter(save_path=args.performance_plot_path, interval=args.performance_plot_interval)
+    plotter = Plotter(save_path=args.performance_plot_path, interval=args.performance_plot_episodes)
 
     pretrain_test = Tester(qn, env, report_interval=100)
     print('Pretrain test:')
@@ -93,7 +93,7 @@ def train(args=None):
         if (epi + 1) % args.quick_save_interval == 0 and args.quick_save:
             qn.save('./tmp/quick_save.ckpt')
             
-        if (epi + 1) % args.performance_plot_episodes == 0:
+        if (epi + 1) % args.performance_plot_interval == 0:
             plotter.plot(np.mean(score))
             score = []
 
