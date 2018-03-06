@@ -29,6 +29,7 @@ def train(args=None):
 
     # type='v5' use dual
 
+    print('Set Q-network version: ', args.qn_version)
     qn = DeepQN(state_shape=env.state_shape, num_actions=env.num_actions, gamma=args.gamma, type=args.qn_version)
 
     qn.reset_sess(sess)
@@ -68,8 +69,6 @@ def train(args=None):
             rc += r
             cnt_iter += 1
             if (cnt_iter + 1) % 10000 == 0:
-                if args.quick_save:
-                    qn.save('./tmp/quick_save.ckpt')
                 reward_record.append(test.run(qn, sess))
 
         score.append(rc)
@@ -79,6 +78,13 @@ def train(args=None):
         s, s_, r, a, done = mr.replay(batch_size=args.batch_size)
 
         qn.train(s, s_, r, a, done)
+
+        if (epi + 1) % args.quick_save_interval == 0:
+            qn.save('./tmp/quick_save.ckpt')
+            
+        if (epi + 1) % args.performance_plot_interval == 0:
+            plotter.plot(np.mean(score))
+            score = []
 
         if cnt_iter > args.max_iter:
             break
@@ -131,6 +137,9 @@ def parse_arguments():
     parser.add_argument('--tester_report_interval', dest='tester_report_interval', type=int, default=20)
     parser.add_argument('--tester_episodes', dest='tester_episodes', type=int, default=20)
     parser.add_argument('--quick_save', dest='quick_save', type=int, default=1)
+    parser.add_argument('--quick_save_interval', dest='quick_save_interval', type=int, default=200)
+    parser.add_argument('--performance_plot_path', dest='performance_plot_path', type=str, default='./figure/perfplot.png')
+    parser.add_argument('--performance_plot_interval', dest='performance_plot_interval', type=int, default=10)
     return parser.parse_args()
 
 def main(argv):
