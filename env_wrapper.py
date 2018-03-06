@@ -3,11 +3,15 @@ from collections import deque
 import numpy as np
 import gym, sys, copy, argparse
 from image_preprocessing import image_prep
+from gym import wrappers
 
 class EnvWrapper(object):
-    def __init__(self, env_name='SpaceInvaders-v0', mod_r=False):
-        self.env_name = env_name
-        self.env = gym.make(env_name)
+    def __init__(self, args, mod_r=False, monitor=False):
+        self.env_name = args.env
+        if monitor:
+            self.env = wrappers.Monitor(gym.make(self.env_name), 'tmp/{}_{}_record'.format(args.env, args.qnum))
+        else:
+            self.evn = gym.make(self.env_name)
         self.num_actions = self.env.action_space.n
         self.state_shape = self.env.observation_space.shape
         self.frame_stack = None

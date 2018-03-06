@@ -17,8 +17,8 @@ def train(args=None):
     config = tf.ConfigProto(gpu_options=gpu_ops, log_device_placement=False)
     sess = tf.Session(config=config)
 
-    env = EnvWrapper(env_name=args.env, mod_r=True)
-    env_test = EnvWrapper(args.env, mod_r=False)
+    env = EnvWrapper(args, mod_r=True, monitor=True)
+    env_test = EnvWrapper(args, mod_r=False)
 
     if args.use_mr:
         print('Set experience replay ON')
@@ -68,7 +68,7 @@ def train(args=None):
             s = s_
             rc += r
             cnt_iter += 1
-            if (cnt_iter + 1) % 1000 == 0:
+            if (cnt_iter + 1) % 10000 == 0:
                 r_avg, _ = test.run(qn, sess)
                 reward_record.append(r_avg)
 
@@ -151,25 +151,21 @@ def main(argv):
     args = parse_arguments()
 
     if args.use_mr == 0 and args.qn_version == 'v1':
-        log_name = "{}_q1_data.log".format(args.env)
-        model_path = "tmp/{}_q1_model".format(args.env)
+        qnum = "q1"
     elif args.use_mr == 1 and args.qn_version == 'v1':
-        log_name = "{}_q2_data.log".format(args.env)
-        model_path = "tmp/{}_q2_model".format(args.env)
+        qnum = "q2"
     elif args.use_mr == 1 and args.qn_version == 'v3':
-        log_name = "{}_q3_data.log".format(args.env)
-        model_path = "tmp/{}_q3_model".format(args.env)
+        qnum = "q3"
     elif args.use_mr == 1 and args.qn_version == 'v5':
-        log_name = "{}_q4_data.log".format(args.env)
-        model_path = "tmp/{}_q4_model".format(args.env)
+        qnum = "q4"
     elif args.use_mr == 1 and args.qn_version == 'v4' and args.env == 'SpaceInvaders-v0':
-        log_name = "{}_q5_data.log".format(args.env)
-        model_path = "tmp/{}q_q5_model".format(args.env)
+        qnum = "q5"
     else:
         print("Wrong settings!")
         return
-    args.log_name = log_name
-    args.model_path = model_path
+    args.log_name = "{}_{}_data.log".format(args.env, qnum)
+    args.qnum = qnum
+    args.model_path = "{}_{}_model".format(args.env, qnum)
     if args.train == 1:
         train(args)
     else:
