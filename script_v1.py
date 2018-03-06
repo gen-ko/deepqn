@@ -109,6 +109,24 @@ def train():
     f.close()
     return
 
+def test(render=False, path='./tmp/dqn_v3.ckpt', episodes=100):
+    gpu_ops = tf.GPUOptions(allow_growth=True)
+    config = tf.ConfigProto(gpu_options=gpu_ops)
+    sess = tf.Session(config=config)
+
+    qn = DeepQN(state_shape=(2,), num_actions=3, gamma=0.99)
+
+    qn.reset_sess(sess)
+
+    qn.load(path)
+
+    env = gym.make('MountainCar-v0')
+
+    testor = Tester(qn, env, report_interval=100, episodes=episodes)
+
+    testor.run(qn, sess, render=render)
+
+    return
 
 def get_eps(t):
     return max(0.01, 1.0 - np.log10(t + 1) * 0.995)
