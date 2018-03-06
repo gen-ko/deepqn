@@ -12,7 +12,7 @@ from plotter import Plotter
 from env_wrapper import EnvWrapper
 
 
-def train(env_name, has_memrory, qn_ver, log_name, model_path):
+def train(env_name, has_memrory, qn_ver, log_name, model_path='./tmp/model.ckpt'):
     print(tf.__version__)
     gpu_ops = tf.GPUOptions(allow_growth=True)
     config = tf.ConfigProto(gpu_options=gpu_ops, log_device_placement=False)
