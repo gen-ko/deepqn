@@ -11,6 +11,10 @@ from plotter import Plotter
 
 from env_wrapper import EnvWrapper
 
+def record(qn, sess, env):
+    test = Tester(qn, env, 20, 20)
+    return test.run(qn, sess)
+
 
 def main():
     print(tf.__version__)
@@ -43,6 +47,8 @@ def main():
     testor.run(qn, sess)
 
     score = []
+    reward_record = []
+    cnt_iter = 0
 
     for epi in range(1000000):
 
@@ -66,22 +72,17 @@ def main():
 
         while not done:
             a = qn.select_action_eps_greedy(get_eps(epi), s)
-
             a_ = a[0]
-
             a_batch.append(a_)
-
             s_, r, done, _ = env.step(a_)
-
             s_new_batch.append(s_)
-
             r_batch.append(r)
-
             done_batch.append(done)
-
             s = s_
-
             rc += r
+            cnt_iter += 1
+            if (cnt_iter + 1) % 10000 == 0:
+                reward_record.append(record(qn, sess, env))
 
         score.append(rc)
 
@@ -99,14 +100,20 @@ def main():
 
         qn.train(s_batch, s_new_batch, r_batch, a_batch, done_batch)
 
-        if (epi + 1) % 200 == 0:
-            avg_score = np.mean(score)
-            plotter.plot(avg_score)
-            print('avg score last 200 episodes ', avg_score)
-            score = []
-            if avg_score > 195:
-                break
+        if cnt_iter > 1000000:
+            break
 
+        # if (epi + 1) % 200 == 0:
+        #     avg_score = np.mean(score)
+        #     plotter.plot(avg_score)
+        #     print('avg score last 200 episodes ', avg_score)
+        #     score = []
+        #     if avg_score > 195:
+        #         break
+
+    f = open('CartPole-v0_q1_data.log', 'w')
+    f.write(str(reward_record))
+    f.close()
     return
 
 
