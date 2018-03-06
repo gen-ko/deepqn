@@ -35,8 +35,8 @@ def train():
     else:
         print("Wrong settings!")
 
-    env = EnvWrapper(env_name)
-    env_test = EnvWrapper(env_name)
+    env = EnvWrapper(env_name, mod_r=True)
+    env_test = EnvWrapper(env_name, mod_r=False)
 
     mr = MemoryReplayer(env.state_shape, capacity=100000, enabled=has_memrory)
 
