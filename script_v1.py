@@ -65,6 +65,7 @@ def train(args=None):
             rc += r
             cnt_iter += 1
             if (cnt_iter + 1) % 10000 == 0:
+                qn.save(args.model_path)
                 reward_record.append(test.run(qn, sess))
 
         score.append(rc)
