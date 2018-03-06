@@ -12,28 +12,11 @@ from plotter import Plotter
 from env_wrapper import EnvWrapper
 
 
-def train():
+def train(env_name, has_memrory, qn_ver, log_name):
     print(tf.__version__)
     gpu_ops = tf.GPUOptions(allow_growth=True)
     config = tf.ConfigProto(gpu_options=gpu_ops, log_device_placement=False)
     sess = tf.Session(config=config)
-
-    env_name = 'CartPole-v0'
-    has_memrory = False
-    qn_ver = 'v1'
-
-    if not has_memrory and qn_ver == 'v1':
-        log_name = "{}-v0_q1_data.log".format(env_name)
-    elif has_memrory and qn_ver == 'v1':
-        log_name = "{}-v0_q2_data.log".format(env_name)
-    elif has_memrory and qn_ver == 'v3':
-        log_name = "{}-v0_q3_data.log".format(env_name)
-    elif has_memrory and qn_ver == 'v5':
-        log_name = "{}-v0_q4_data.log".format(env_name)
-    elif has_memrory and qn_ver == 'v4' and env_name == 'SpaceInvaders-v0':
-        log_name = "{}-v0_q5_data.log".format(env_name)
-    else:
-        print("Wrong settings!")
 
     env = EnvWrapper(env_name)
     env_test = EnvWrapper(env_name)
@@ -109,12 +92,36 @@ def train():
     f.close()
     return
 
+def test(env_name, model_path):
+    pass
 
 def get_eps(t):
     return max(0.01, 1.0 - np.log10(t + 1) * 0.995)
 
 def main():
-    train()
+    has_memrory = False
+    env_name = "CartPole-v0"
+    qn_ver = 'v1'
+    if not has_memrory and qn_ver == 'v1':
+        log_name = "{}-v0_q1_data.log".format(env_name)
+        model_path = "tmp/{}-v0_q1_model".format(env_name)
+    elif has_memrory and qn_ver == 'v1':
+        log_name = "{}-v0_q2_data.log".format(env_name)
+        model_path = "tmp/{}-v0_q2_model".format(env_name)
+    elif has_memrory and qn_ver == 'v3':
+        log_name = "{}-v0_q3_data.log".format(env_name)
+        model_path = "tmp/{}-v0_q3_model".format(env_name)
+    elif has_memrory and qn_ver == 'v5':
+        log_name = "{}-v0_q4_data.log".format(env_name)
+        model_path = "tmp/{}-v0_q4_model".format(env_name)
+    elif has_memrory and qn_ver == 'v4' and env_name == 'SpaceInvaders-v0':
+        log_name = "{}-v0_q5_data.log".format(env_name)
+        model_path = "tmp/{}-v0_q5_model".format(env_name)
+    else:
+        print("Wrong settings!")
+        return
+    train(env_name, has_memrory, qn_ver, log_name)
+    test(env_name, model_path)
 
 if __name__ == '__main__':
     main()
