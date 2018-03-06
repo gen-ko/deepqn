@@ -119,20 +119,20 @@ def main():
     env_name = "CartPole-v0"
     qn_ver = 'v1'
     if not has_memrory and qn_ver == 'v1':
-        log_name = "{}-v0_q1_data.log".format(env_name)
-        model_path = "tmp/{}-v0_q1_model".format(env_name)
+        log_name = "{}_q1_data.log".format(env_name)
+        model_path = "tmp/{}_q1_model".format(env_name)
     elif has_memrory and qn_ver == 'v1':
-        log_name = "{}-v0_q2_data.log".format(env_name)
-        model_path = "tmp/{}-v0_q2_model".format(env_name)
+        log_name = "{}_q2_data.log".format(env_name)
+        model_path = "tmp/{}_q2_model".format(env_name)
     elif has_memrory and qn_ver == 'v3':
-        log_name = "{}-v0_q3_data.log".format(env_name)
-        model_path = "tmp/{}-v0_q3_model".format(env_name)
+        log_name = "{}_q3_data.log".format(env_name)
+        model_path = "tmp/{}_q3_model".format(env_name)
     elif has_memrory and qn_ver == 'v5':
-        log_name = "{}-v0_q4_data.log".format(env_name)
-        model_path = "tmp/{}-v0_q4_model".format(env_name)
+        log_name = "{}_q4_data.log".format(env_name)
+        model_path = "tmp/{}_q4_model".format(env_name)
     elif has_memrory and qn_ver == 'v4' and env_name == 'SpaceInvaders-v0':
-        log_name = "{}-v0_q5_data.log".format(env_name)
-        model_path = "tmp/{}-v0_q5_model".format(env_name)
+        log_name = "{}_q5_data.log".format(env_name)
+        model_path = "tmp/{}_q5_model".format(env_name)
     else:
         print("Wrong settings!")
         return
