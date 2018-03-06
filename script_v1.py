@@ -20,6 +20,20 @@ def main():
 
     env_name = 'CartPole-v0'
     has_memrory = False
+    qn_ver = 'v1'
+
+    if not has_memrory and qn_ver == 'v1':
+        log_name = "{}-v0_q1_data.log".format(env_name)
+    elif has_memrory and qn_ver == 'v1':
+        log_name = "{}-v0_q2_data.log".format(env_name)
+    elif has_memrory and qn_ver == 'v3':
+        log_name = "{}-v0_q3_data.log".format(env_name)
+    elif has_memrory and qn_ver == 'v5':
+        log_name = "{}-v0_q4_data.log".format(env_name)
+    elif has_memrory and qn_ver == 'v4' and env_name == 'SpaceInvaders-v0':
+        log_name = "{}-v0_q5_data.log".format(env_name)
+    else:
+        print("Wrong settings!")
 
     env = EnvWrapper(env_name)
     env_test = EnvWrapper(env_name)
@@ -30,7 +44,7 @@ def main():
 
     # type='v5' use dual
 
-    qn = DeepQN(state_shape=env.state_shape, num_actions=env.num_actions, gamma=0.99, type='v1')
+    qn = DeepQN(state_shape=env.state_shape, num_actions=env.num_actions, gamma=0.99, type=qn_ver)
 
     qn.reset_sess(sess)
 
@@ -89,10 +103,6 @@ def main():
         #     if avg_score > 195:
         #         break
 
-    if has_memrory:
-        log_name = "{}-v0_q2_data.log".format(env_name)
-    else:
-        log_name = "{}-v0_q1_data.log".format(env_name)
     f = open(log_name, 'w')
     f.write(str(reward_record))
     f.close()
