@@ -98,9 +98,9 @@ def train(args=None):
         if (epi + 1) % args.quick_save_interval == 0 and args.quick_save:
             qn.save('./tmp/quick_save.ckpt')
             
-        # if (epi + 1) % args.performance_plot_interval == 0:
-        #     score = iter_tester.run(qn, sess)
-        #     plotter.plot(np.mean(score))
+        if (epi + 1) % args.performance_plot_interval == 0:
+            avg_score, _ = iter_tester.run(qn, sess)
+            plotter.plot(avg_score)
 
 
     qn.save(args.model_path)
@@ -149,7 +149,7 @@ def parse_arguments():
     parser.add_argument('--quick_save', dest='quick_save', type=int, default=1)
     parser.add_argument('--quick_save_interval', dest='quick_save_interval', type=int, default=200)
     parser.add_argument('--performance_plot_path', dest='performance_plot_path', type=str, default='./figure/perfplot.png')
-    parser.add_argument('--performance_plot_interval', dest='performance_plot_interval', type=int, default=10000)
+    parser.add_argument('--performance_plot_interval', dest='performance_plot_interval', type=int, default=100)
     parser.add_argument('--performance_plot_episodes', dest='performance_plot_episodes', type=int, default=20)
     parser.add_argument('--reuse_model', dest='reuse_model', type=int, default=0)
     parser.add_argument('--use_monitor', dest='use_monitor', type=int, default=0)

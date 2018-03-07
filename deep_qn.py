@@ -149,7 +149,7 @@ class DeepQN(object):
 
             h3_v = tf.layers.dense(inputs=h2_v,
                                    units=1,
-                                   activation=tf.nn.tanh,
+                                   activation=None,
                                    use_bias=True,
                                    kernel_initializer=tf.keras.initializers.glorot_uniform(),
                                    bias_initializer=tf.zeros_initializer(),
@@ -158,7 +158,7 @@ class DeepQN(object):
 
             h3_a = tf.layers.dense(inputs=h2_a,
                                    units=self.num_actions,
-                                   activation=tf.nn.tanh,
+                                   activation=None,
                                    use_bias=True,
                                    kernel_initializer=tf.keras.initializers.glorot_uniform(),
                                    bias_initializer=tf.zeros_initializer(),
