@@ -86,18 +86,12 @@ def train(args=None):
             mr.remember(s, s_, r, a_, done)
             s = s_
             rc += r
-
-
         score.append(rc)
-
         # replay
-
         s, s_, r, a, done = mr.replay(batch_size=args.batch_size)
-
         qn.train(s, s_, r, a, done)
 
-        cnt_iter += 1
-        if (cnt_iter + 1) % args.iter_report_interval == 0:
+        if (epi + 1) % args.iter_report_interval == 0:
             r_avg, _ = iter_tester.run(qn, sess)
             reward_record.append(r_avg)
 
@@ -105,10 +99,9 @@ def train(args=None):
             qn.save('./tmp/quick_save.ckpt')
             
         if (epi + 1) % args.performance_plot_interval == 0:
+            score = iter_tester.run(qn, sess)
             plotter.plot(np.mean(score))
 
-        if cnt_iter > args.max_iter:
-            break
 
     qn.save(args.model_path)
     f = open(args.log_name, 'w')
@@ -156,7 +149,7 @@ def parse_arguments():
     parser.add_argument('--quick_save', dest='quick_save', type=int, default=1)
     parser.add_argument('--quick_save_interval', dest='quick_save_interval', type=int, default=200)
     parser.add_argument('--performance_plot_path', dest='performance_plot_path', type=str, default='./figure/perfplot.png')
-    parser.add_argument('--performance_plot_interval', dest='performance_plot_interval', type=int, default=20)
+    parser.add_argument('--performance_plot_interval', dest='performance_plot_interval', type=int, default=10000)
     parser.add_argument('--performance_plot_episodes', dest='performance_plot_episodes', type=int, default=20)
     parser.add_argument('--reuse_model', dest='reuse_model', type=int, default=0)
     parser.add_argument('--use_monitor', dest='use_monitor', type=int, default=0)
