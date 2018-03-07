@@ -20,9 +20,8 @@ def train(args=None):
     sess = tf.Session(config=config)
     args_test = copy.copy(args)
     args_test.use_monitor = False
-    print('{} {}'.format(args.use_monitor, args_test.use_monitor))
-    env = EnvWrapper(args_test, mod_r=True)
-    env_test = EnvWrapper(args, mod_r=False)
+    env = EnvWrapper(args, mod_r=False)
+    env_test = EnvWrapper(args_test, mod_r=False)
 
     if args.use_mr:
         print('Set experience replay ON')
@@ -56,8 +55,8 @@ def train(args=None):
         print('Set reuse model      ON')
         qn.load(args.model_path)
 
-    plotter = Plotter(save_path=args.performance_plot_path, interval=args.performance_plot_interval,
-                      episodes=args.performance_plot_episodes)
+    # plotter = Plotter(save_path=args.performance_plot_path, interval=args.performance_plot_interval,
+    #                   episodes=args.performance_plot_episodes)
 
 
     pretrain_test = Tester(qn, env_test, report_interval=100)
@@ -99,9 +98,9 @@ def train(args=None):
         if (epi + 1) % args.quick_save_interval == 0 and args.quick_save:
             qn.save('./tmp/quick_save.ckpt')
             
-        if (epi + 1) % args.performance_plot_interval == 0:
-            avg_score, _ = iter_tester.run(qn, sess)
-            plotter.plot(avg_score)
+        # if (epi + 1) % args.performance_plot_interval == 0:
+        #     avg_score, _ = iter_tester.run(qn, sess)
+        #     plotter.plot(avg_score)
 
 
     qn.save(args.model_path)
