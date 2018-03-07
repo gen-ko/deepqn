@@ -10,7 +10,7 @@ from tester import Tester
 from plotter import Plotter
 
 from collections import deque
-
+import copy
 from env_wrapper import EnvWrapper
 
 
@@ -18,8 +18,10 @@ def train(args=None):
     gpu_ops = tf.GPUOptions(allow_growth=True)
     config = tf.ConfigProto(gpu_options=gpu_ops, log_device_placement=False)
     sess = tf.Session(config=config)
-
-    env = EnvWrapper(args, mod_r=True)
+    args_test = copy.copy(args)
+    args_test.use_monitor = False
+    print('{} {}'.format(args.use_monitor, args_test.use_monitor))
+    env = EnvWrapper(args_test, mod_r=True)
     env_test = EnvWrapper(args, mod_r=False)
 
     if args.use_mr:
