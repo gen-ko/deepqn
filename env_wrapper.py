@@ -9,7 +9,7 @@ class EnvWrapper(object):
     def __init__(self, args, mod_r=False):
         self.env_name = args.env
         if args.use_monitor:
-            self.env = wrappers.Monitor(gym.make(self.env_name), 'tmp/{}_{}_record'.format(args.env, args.qnum))
+            self.env = wrappers.Monitor(gym.make(self.env_name), 'tmp/{}_{}_record'.format(args.env, args.qnum), force=True)
         else:
             self.env = gym.make(self.env_name)
         self.num_actions = self.env.action_space.n
