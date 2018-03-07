@@ -54,8 +54,8 @@ def train(args=None):
         print('Set reuse model      ON')
         qn.load(args.model_path)
 
-    plotter = Plotter(save_path=args.performance_plot_path, interval=args.performance_plot_interval,
-                      episodes=args.performance_plot_episodes)
+    # plotter = Plotter(save_path=args.performance_plot_path, interval=args.performance_plot_interval,
+    #                   episodes=args.performance_plot_episodes)
 
 
     pretrain_test = Tester(qn, env_test, report_interval=100)
@@ -98,9 +98,9 @@ def train(args=None):
         if (epi + 1) % args.quick_save_interval == 0 and args.quick_save:
             qn.save('./tmp/quick_save.ckpt')
             
-        if (epi + 1) % args.performance_plot_interval == 0:
-            score = iter_tester.run(qn, sess)
-            plotter.plot(np.mean(score))
+        # if (epi + 1) % args.performance_plot_interval == 0:
+        #     score = iter_tester.run(qn, sess)
+        #     plotter.plot(np.mean(score))
 
 
     qn.save(args.model_path)
