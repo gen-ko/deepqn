@@ -80,9 +80,9 @@ def train(args=None):
     print('Pretrain test done.')
 
     tester_1 = Tester(qn, env, episodes=args.performance_plot_episodes,
-                         report_interval=args.performance_plot_episodes)
+                         report_interval=args.performance_plot_episodes, title='test-r-mod')
     tester_2 = Tester(qn, env_test, episodes=args.performance_plot_episodes,
-                         report_interval=args.performance_plot_episodes)
+                         report_interval=args.performance_plot_episodes, title='test-r-real')
 
 
     score = deque([], maxlen=args.performance_plot_episodes)

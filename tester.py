@@ -5,11 +5,12 @@ import numpy as np
 import gym, sys, copy, argparse
 
 class Tester(object):
-    def __init__(self, qn, env, episodes: int=100, report_interval: int=10):
+    def __init__(self, qn, env, episodes: int=100, report_interval: int=100, title='test0'):
         self.env = env
         self.qn = qn
         self.report_interval = report_interval
         self.episodes = episodes
+        self.title = title
         return
 
     def run(self, qn, sess, render=False):
@@ -39,7 +40,7 @@ class Tester(object):
                     r_sum_avg += r_sum / self.report_interval
                     report_counter += 1
                     if report_counter % self.report_interval == 0:
-                        print('Test reward avg: ', r_sum_avg)
+                        print(self.title + ' reward avg: ', r_sum_avg)
                         return_value = r_sum_avg
                         r_sum_avg = 0.0
                         report_counter = 0

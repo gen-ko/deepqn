@@ -57,7 +57,7 @@ class EnvWrapper(object):
 
         v_update = np.cos(3 * self.si[0]) * (-0.0025)
 
-        r_update = (si[1] - self.si[1] - v_update) * np.sign(si[1]) * 800.0
+        r_update = (si[1] - self.si[1] - v_update) * np.sign(si[1]) * 2000.0
 
         if abs(si[1]) >= 0.07:
             r_update = 0.8
