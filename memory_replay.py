@@ -65,7 +65,7 @@ class MemoryReplayer(object):
         done = self.done[batch_idx]
         return s, s_, r, a, done
 
-
+# not using (all TF ops version)
 class MemoryReplayerTF(object):
     def __init__(self, state_shape, capacity: int = 100000, batch_size=128):
 

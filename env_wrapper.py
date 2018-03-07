@@ -2,7 +2,7 @@
 from collections import deque
 import numpy as np
 import gym, sys, copy, argparse
-from image_preprocessing import image_prep
+from utils import image_prep
 from gym import wrappers
 
 class EnvWrapper(object):

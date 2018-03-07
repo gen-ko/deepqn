@@ -12,6 +12,7 @@ from plotter import Plotter
 from collections import deque
 import copy
 from env_wrapper import EnvWrapper
+import utils
 
 
 def train(args=None):
@@ -34,6 +35,10 @@ def train(args=None):
         print('Set quick save        OFF')
 
     mr = MemoryReplayer(env.state_shape, capacity=args.mr_capacity, enabled=args.use_mr)
+
+    # burn_in
+    utils.burn_in(env, mr)
+
 
     # set type='v1' for linear model, 'v3' for three layer model (two tanh activations)
 
