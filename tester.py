@@ -23,6 +23,7 @@ class Tester(object):
                 self.env.render()
             is_terminal = False
             r_sum = 0.0
+            iter_cnt = 0
 
             while not is_terminal:
                 q = sess.run(qn.q, feed_dict={qn.s: [s]})
@@ -34,7 +35,7 @@ class Tester(object):
                 s = s_
 
                 if is_terminal:
-                    r_per_epi.append(r)
+                    r_per_epi.append(r_sum)
                     r_sum_avg += r_sum / self.report_interval
                     report_counter += 1
                     if report_counter % self.report_interval == 0:

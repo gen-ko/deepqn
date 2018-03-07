@@ -57,14 +57,15 @@ def train(args=None):
     plotter = Plotter(save_path=args.performance_plot_path, interval=args.performance_plot_interval,
                       episodes=args.performance_plot_episodes)
 
-    plotter = Plooter
 
     pretrain_test = Tester(qn, env_test, report_interval=100)
     print('Pretrain test:')
     pretrain_test.run(qn, sess)
     print('Pretrain test done.')
 
+
     iter_tester = Tester(qn, env_test, episodes=args.iter_report_avg, report_interval=args.iter_report_avg)
+
 
     score = deque([], maxlen=args.performance_plot_episodes)
     reward_record = []
@@ -119,7 +120,7 @@ def test(args):
     gpu_ops = tf.GPUOptions(allow_growth=True)
     config = tf.ConfigProto(gpu_options=gpu_ops)
     sess = tf.Session(config=config)
-    env = EnvWrapper(args.env)
+    env = EnvWrapper(args)
     qn = DeepQN(state_shape=env.state_shape, num_actions=env.num_actions, gamma=args.gamma, type=args.qn_version)
     qn.reset_sess(sess)
     qn.load(args.model_path)
@@ -150,13 +151,13 @@ def parse_arguments():
     parser.add_argument('--max_iter', dest='max_iter', type=int, default=1000000)
     parser.add_argument('--max_episodes', dest='max_episodes', type=int, default=100000)
     parser.add_argument('--batch_size', dest='batch_size', type=int, default=64)
-    parser.add_argument('--tester_report_interval', dest='tester_report_interval', type=int, default=20)
-    parser.add_argument('--tester_episodes', dest='tester_episodes', type=int, default=20)
+    parser.add_argument('--tester_report_interval', dest='tester_report_interval', type=int, default=100)
+    parser.add_argument('--tester_episodes', dest='tester_episodes', type=int, default=100)
     parser.add_argument('--quick_save', dest='quick_save', type=int, default=1)
     parser.add_argument('--quick_save_interval', dest='quick_save_interval', type=int, default=200)
     parser.add_argument('--performance_plot_path', dest='performance_plot_path', type=str, default='./figure/perfplot.png')
     parser.add_argument('--performance_plot_interval', dest='performance_plot_interval', type=int, default=20)
-    parser.add_argument('--performance_plot_episodes', dest='performance_plot_episodes', type=int, default=100)
+    parser.add_argument('--performance_plot_episodes', dest='performance_plot_episodes', type=int, default=20)
     parser.add_argument('--reuse_model', dest='reuse_model', type=int, default=0)
     parser.add_argument('--use_monitor', dest='use_monitor', type=int, default=0)
     parser.add_argument('--iter_report_interval', dest='iter_report_interval', type=int, default=10000)
@@ -184,7 +185,7 @@ def main(argv):
         return
     args.log_name = "{}_{}_data.log".format(args.env, qnum)
     args.qnum = qnum
-    args.model_path = "{}_{}_model".format(args.env, qnum)
+    args.model_path = "tmp/{}_{}_model".format(args.env, qnum)
     if args.train == 1:
         train(args)
     else:
