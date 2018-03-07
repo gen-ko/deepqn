@@ -12,7 +12,7 @@ class Plotter(object):
         self.t_now = 0
         self.interval = interval
         self.episodes = episodes
-        self.title_text = 'Average Reward per {interval} Episodes'.format(interval=self.episodes)
+        self.title_text = 'Average Reward on {interval} Steps'.format(interval=self.episodes)
         self.save_path = save_path
         return
 
@@ -23,7 +23,7 @@ class Plotter(object):
         self.t_now += self.interval
         line_1, = plt.plot(self.t, self.x, label='line_0')
         plt.legend(handles=[line_1])
-        plt.xlabel('Episode')
+        plt.xlabel('Step')
         plt.ylabel('Reward')
         plt.title(self.title_text)
         plt.savefig(self.save_path)

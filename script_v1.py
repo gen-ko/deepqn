@@ -57,12 +57,14 @@ def train(args=None):
     plotter = Plotter(save_path=args.performance_plot_path, interval=args.performance_plot_interval,
                       episodes=args.performance_plot_episodes)
 
-    pretrain_test = Tester(qn, env, report_interval=100)
+    plotter = Plooter
+
+    pretrain_test = Tester(qn, env_test, report_interval=100)
     print('Pretrain test:')
     pretrain_test.run(qn, sess)
     print('Pretrain test done.')
 
-    test = Tester(qn, env_test, episodes=args.tester_episodes, report_interval=args.tester_report_interval)
+    iter_tester = Tester(qn, env_test, episodes=args.iter_report_avg, report_interval=args.iter_report_avg)
 
     score = deque([], maxlen=args.performance_plot_episodes)
     reward_record = []
@@ -83,10 +85,7 @@ def train(args=None):
             mr.remember(s, s_, r, a_, done)
             s = s_
             rc += r
-            cnt_iter += 1
-            if (cnt_iter + 1) % 10000 == 0:
-                r_avg, _ = test.run(qn, sess)
-                reward_record.append(r_avg)
+
 
         score.append(rc)
 
@@ -95,6 +94,11 @@ def train(args=None):
         s, s_, r, a, done = mr.replay(batch_size=args.batch_size)
 
         qn.train(s, s_, r, a, done)
+
+        cnt_iter += 1
+        if (cnt_iter + 1) % args.iter_report_interval == 0:
+            r_avg, _ = iter_tester.run(qn, sess)
+            reward_record.append(r_avg)
 
         if (epi + 1) % args.quick_save_interval == 0 and args.quick_save:
             qn.save('./tmp/quick_save.ckpt')
@@ -155,6 +159,10 @@ def parse_arguments():
     parser.add_argument('--performance_plot_episodes', dest='performance_plot_episodes', type=int, default=100)
     parser.add_argument('--reuse_model', dest='reuse_model', type=int, default=0)
     parser.add_argument('--use_monitor', dest='use_monitor', type=int, default=0)
+    parser.add_argument('--iter_report_interval', dest='iter_report_interval', type=int, default=10000)
+    parser.add_argument('--iter_report_avg', dest='iter_report_avg', type=int, default=20)
+
+
     return parser.parse_args()
 
 def main(argv):
