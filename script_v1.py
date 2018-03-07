@@ -69,7 +69,6 @@ def train(args=None):
 
     score = deque([], maxlen=args.performance_plot_episodes)
     reward_record = []
-    cnt_iter = 0
 
 
     for epi in range(args.max_episodes):
@@ -153,7 +152,7 @@ def parse_arguments():
     parser.add_argument('--performance_plot_episodes', dest='performance_plot_episodes', type=int, default=20)
     parser.add_argument('--reuse_model', dest='reuse_model', type=int, default=0)
     parser.add_argument('--use_monitor', dest='use_monitor', type=int, default=0)
-    parser.add_argument('--iter_report_interval', dest='iter_report_interval', type=int, default=10000)
+    parser.add_argument('--iter_report_interval', dest='iter_report_interval', type=int, default=1000)
     parser.add_argument('--iter_report_avg', dest='iter_report_avg', type=int, default=20)
 
 
