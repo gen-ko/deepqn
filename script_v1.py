@@ -29,11 +29,6 @@ def train(args=None):
     else:
         print('Set experience replay OFF')
 
-    if args.quick_save:
-        print('Set quick save        ON')
-    else:
-        print('Set quick save        OFF')
-
     mr = MemoryReplayer(env.state_shape, capacity=args.mr_capacity, enabled=args.use_mr)
 
     # burn_in
@@ -49,10 +44,7 @@ def train(args=None):
 
     qn.reset_sess(sess)
 
-
-
-    qn.set_train(lr=args.lr)
-
+    qn.set_train(args.lr)
 
 
 
@@ -64,8 +56,11 @@ def train(args=None):
         print('Set reuse model      ON')
         try:
             qn.load('./tmp/qn-' + args.qn_version + '-' + args.env + '-keyinterrupt' + '.ckpt')
+            optimizer_scope = tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, "optimizer")
+            init = tf.variables_initializer(optimizer_scope)
+            sess.run(init)
             print('Found previous model')
-        except:
+        except tf.errors.NotFoundError:
             print('No previous model found, init new model')
             init = tf.global_variables_initializer()
             sess.run(init)
@@ -155,7 +150,7 @@ def parse_arguments():
     parser.add_argument('--learning_rate', dest='lr', type=float, default=0.0001)
     parser.add_argument('--max_iter', dest='max_iter', type=int, default=1000000)
     parser.add_argument('--max_episodes', dest='max_episodes', type=int, default=100000)
-    parser.add_argument('--batch_size', dest='batch_size', type=int, default=64)
+    parser.add_argument('--batch_size', dest='batch_size', type=int, default=32)
     parser.add_argument('--quick_save', dest='quick_save', type=int, default=1)
     parser.add_argument('--performance_plot_path', dest='performance_plot_path', type=str, default='./figure/perfplot.png')
     parser.add_argument('--performance_plot_interval', dest='performance_plot_interval', type=int, default=100)
