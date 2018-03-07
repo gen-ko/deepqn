@@ -97,8 +97,6 @@ ENV/
 
 # mypy
 .mypy_cache/
-tmp/
-trained/
 log
 pt/
 *.png

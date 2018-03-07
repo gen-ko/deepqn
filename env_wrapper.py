@@ -51,13 +51,15 @@ class EnvWrapper(object):
         return s
 
     def step_mountain_car(self, a):
-        si, r, done, info = self.env.step(a)
+        si, r, done, _ = self.env.step(a)
 
         h = np.sin(3 * si[0]) * 0.45 + 0.55
 
-        v_update = np.cos(3 * self.si[0]) * (-0.0025)
+        v = self.si[1]
 
-        r_update = (si[1] - self.si[1] - v_update) * np.sign(si[1]) * 2000.0
+        v_update = np.cos(3 * v) * (-0.0025)
+
+        r_update = (si[1] - self.si[1] - v_update) * np.sign(si[1]) * 800.0
 
         if abs(si[1]) >= 0.07:
             r_update = 0.8
@@ -69,7 +71,7 @@ class EnvWrapper(object):
             r += r_update
 
         self.si = si
-        return si, r, done, info
+        return si, r, done, {}
 
     def reset_mountain_car(self):
         self.si = self.env.reset()
