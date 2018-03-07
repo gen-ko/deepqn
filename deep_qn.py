@@ -181,8 +181,8 @@ class DeepQN(object):
     def reset_sess(self, sess):
         self.sess = sess
 
-    def set_train(self, lr, beta1=0.9, beta2=0.999):
-        self.train_op = tf.train.AdamOptimizer(lr, beta1=beta1, beta2=beta2).minimize(self.loss)
+    def set_train(self, lr):
+        self.train_op = tf.train.AdamOptimizer(lr).minimize(self.loss)
 
     def predict(self, state):
         if state.ndim == self.state_ndim:

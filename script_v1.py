@@ -21,7 +21,7 @@ def train(args=None):
     sess = tf.Session(config=config)
     args_test = copy.copy(args)
     args_test.use_monitor = False
-    env = EnvWrapper(args, mod_r=False)
+    env = EnvWrapper(args, mod_r=True)
     env_test = EnvWrapper(args_test, mod_r=False)
 
     if args.use_mr:
@@ -37,7 +37,7 @@ def train(args=None):
     mr = MemoryReplayer(env.state_shape, capacity=args.mr_capacity, enabled=args.use_mr)
 
     # burn_in
-    utils.burn_in(env, mr)
+    mr = utils.burn_in(env, mr)
 
 
     # set type='v1' for linear model, 'v3' for three layer model (two tanh activations)
@@ -49,7 +49,11 @@ def train(args=None):
 
     qn.reset_sess(sess)
 
-    qn.set_train(lr=args.lr, beta1=args.beta1, beta2=args.beta2)
+
+
+    qn.set_train(lr=args.lr)
+
+
 
 
     if not args.reuse_model:
@@ -58,7 +62,13 @@ def train(args=None):
         sess.run(init)
     else:
         print('Set reuse model      ON')
-        qn.load(args.model_path)
+        try:
+            qn.load('./tmp/qn-' + args.qn_version + '-' + args.env + '-keyinterrupt' + '.ckpt')
+            print('Found previous model')
+        except:
+            print('No previous model found, init new model')
+            init = tf.global_variables_initializer()
+            sess.run(init)
 
     # plotter = Plotter(save_path=args.performance_plot_path, interval=args.performance_plot_interval,
     #                   episodes=args.performance_plot_episodes)
@@ -69,43 +79,42 @@ def train(args=None):
     pretrain_test.run(qn, sess)
     print('Pretrain test done.')
 
-
-    iter_tester = Tester(qn, env_test, episodes=args.iter_report_avg, report_interval=args.iter_report_avg)
+    tester_1 = Tester(qn, env, episodes=args.performance_plot_episodes,
+                         report_interval=args.performance_plot_episodes)
+    tester_2 = Tester(qn, env_test, episodes=args.performance_plot_episodes,
+                         report_interval=args.performance_plot_episodes)
 
 
     score = deque([], maxlen=args.performance_plot_episodes)
     reward_record = []
 
+    try:
+        for epi in range(args.max_episodes):
+            s = env.reset()
 
-    for epi in range(args.max_episodes):
-        s = env.reset()
+            done = False
 
-        done = False
+            rc = 0
 
-        rc = 0
+            while not done:
+                a = qn.select_action_eps_greedy(get_eps(epi), s)
+                a_ = a[0]
+                s_, r, done, _ = env.step(a_)
+                mr.remember(s, s_, r, a_, done)
+                s = s_
+                rc += r
+            score.append(rc)
+            # replay
+            s, s_, r, a, done = mr.replay(batch_size=args.batch_size)
+            qn.train(s, s_, r, a, done)
 
-        while not done:
-            a = qn.select_action_eps_greedy(get_eps(epi), s)
-            a_ = a[0]
-            s_, r, done, _ = env.step(a_)
-            mr.remember(s, s_, r, a_, done)
-            s = s_
-            rc += r
-        score.append(rc)
-        # replay
-        s, s_, r, a, done = mr.replay(batch_size=args.batch_size)
-        qn.train(s, s_, r, a, done)
-
-        if (epi + 1) % args.iter_report_interval == 0:
-            r_avg, _ = iter_tester.run(qn, sess)
-            reward_record.append(r_avg)
-
-        if (epi + 1) % args.quick_save_interval == 0 and args.quick_save:
-            qn.save('./tmp/quick_save.ckpt')
-            
-        # if (epi + 1) % args.performance_plot_interval == 0:
-        #     avg_score, _ = iter_tester.run(qn, sess)
-        #     plotter.plot(avg_score)
+            if (epi + 1) % args.performance_plot_interval == 0:
+                tester_1.run(qn, sess)
+                r_avg, _ = tester_2.run(qn, sess)
+                reward_record.append(r_avg)
+    except KeyboardInterrupt:
+        qn.save('./tmp/qn-' + args.qn_version + '-' + args.env + '-keyinterrupt' + '.ckpt')
+        exit(-1)
 
 
     qn.save(args.model_path)
@@ -144,22 +153,15 @@ def parse_arguments():
     parser.add_argument('--gamma', dest='gamma', type=float, default=1.0)
     parser.add_argument('--qn_version', dest='qn_version', type=str, default='v1')
     parser.add_argument('--learning_rate', dest='lr', type=float, default=0.0001)
-    parser.add_argument('--beta1', dest='beta1', type=float, default=0.9)
-    parser.add_argument('--beta2', dest='beta2', type=float, default=0.999)
     parser.add_argument('--max_iter', dest='max_iter', type=int, default=1000000)
     parser.add_argument('--max_episodes', dest='max_episodes', type=int, default=100000)
     parser.add_argument('--batch_size', dest='batch_size', type=int, default=64)
-    parser.add_argument('--tester_report_interval', dest='tester_report_interval', type=int, default=100)
-    parser.add_argument('--tester_episodes', dest='tester_episodes', type=int, default=100)
     parser.add_argument('--quick_save', dest='quick_save', type=int, default=1)
-    parser.add_argument('--quick_save_interval', dest='quick_save_interval', type=int, default=200)
     parser.add_argument('--performance_plot_path', dest='performance_plot_path', type=str, default='./figure/perfplot.png')
     parser.add_argument('--performance_plot_interval', dest='performance_plot_interval', type=int, default=100)
     parser.add_argument('--performance_plot_episodes', dest='performance_plot_episodes', type=int, default=20)
-    parser.add_argument('--reuse_model', dest='reuse_model', type=int, default=0)
+    parser.add_argument('--reuse_model', dest='reuse_model', type=int, default=1)
     parser.add_argument('--use_monitor', dest='use_monitor', type=int, default=0)
-    parser.add_argument('--iter_report_interval', dest='iter_report_interval', type=int, default=1000)
-    parser.add_argument('--iter_report_avg', dest='iter_report_avg', type=int, default=20)
 
 
     return parser.parse_args()

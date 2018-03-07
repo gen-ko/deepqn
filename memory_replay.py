@@ -130,3 +130,5 @@ class MemoryReplayerTF(object):
         self.replay_op = [s, s_, r, a, done]
         return s, s_, r, a, done
 
+
+
