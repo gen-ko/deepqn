@@ -22,13 +22,13 @@ def train():
 
     env2 = EnvWrapper('MountainCar-v0', mod_r=True)
 
-    mr = MemoryReplayer(env1.state_shape, capacity=100000)
+    mr = MemoryReplayer(env1.state_shape, capacity=50000)
 
     qn = DeepQN(state_shape=env1.state_shape, num_actions=env1.num_actions, gamma=0.99)
 
     qn.reset_sess(sess)
 
-    qn.set_train(0.001)
+    qn.set_train(0.008)
 
     init = tf.global_variables_initializer()
     sess.run(init)
@@ -71,9 +71,8 @@ def train():
             print('avg score last 200 episodes ', avg_score)
             score = []
 
-            if testor.run(qn, sess, render=False) > -110.0:
-                qn.save('./tmp/dqn_v3.ckpt')
-                break
+            testor.run(qn, sess, render=False)
+
 
     return
 

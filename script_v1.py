@@ -21,8 +21,8 @@ def train(args=None):
     sess = tf.Session(config=config)
     args_test = copy.copy(args)
     args_test.use_monitor = False
-    env = EnvWrapper(args, mod_r=True)
-    env_test = EnvWrapper(args_test, mod_r=False)
+    env = EnvWrapper(args.env, mod_r=True)
+    env_test = EnvWrapper(args.env, mod_r=False)
 
     if args.use_mr:
         print('Set experience replay ON')
@@ -104,9 +104,10 @@ def train(args=None):
             qn.train(s, s_, r, a, done)
 
             if (epi + 1) % args.performance_plot_interval == 0:
-                tester_1.run(qn, sess)
-                r_avg, _ = tester_2.run(qn, sess)
-                reward_record.append(r_avg)
+                print('train-r-mod reward avg: ', np.mean(score))
+                tester_2.run(qn, sess)
+                #r_avg, _ = tester_2.run(qn, sess)
+                # reward_record.append(r_avg)
     except KeyboardInterrupt:
         qn.save('./tmp/qn-' + args.qn_version + '-' + args.env + '-keyinterrupt' + '.ckpt')
         exit(-1)
@@ -134,7 +135,7 @@ def test(args):
     return
 
 def get_eps(t):
-    return max(0.01, 1.0 - np.log10(t + 1) * 0.995)
+    return max(0.03, 0.6 - np.log10(100*t + 1) * 0.995)
 
 
 def parse_arguments():
@@ -144,17 +145,16 @@ def parse_arguments():
     parser.add_argument('--train',dest='train',type=int,default=1)
     parser.add_argument('--model_path',dest='model_path',type=str, default='./tmp/blabla.ckpt')
     parser.add_argument('--use_mr', dest='use_mr', type=int, default=1)
-    parser.add_argument('--mr_capacity', dest='mr_capacity', type=int, default=100000)
-    parser.add_argument('--gamma', dest='gamma', type=float, default=1.0)
-    parser.add_argument('--qn_version', dest='qn_version', type=str, default='v1')
-    parser.add_argument('--learning_rate', dest='lr', type=float, default=0.0001)
+    parser.add_argument('--mr_capacity', dest='mr_capacity', type=int, default=50000)
+    parser.add_argument('--gamma', dest='gamma', type=float, default=0.99)
+    parser.add_argument('--qn_version', dest='qn_version', type=str, default='v3')
+    parser.add_argument('--learning_rate', dest='lr', type=float, default=0.008)
     parser.add_argument('--max_iter', dest='max_iter', type=int, default=1000000)
     parser.add_argument('--max_episodes', dest='max_episodes', type=int, default=100000)
-    parser.add_argument('--batch_size', dest='batch_size', type=int, default=32)
-    parser.add_argument('--quick_save', dest='quick_save', type=int, default=1)
+    parser.add_argument('--batch_size', dest='batch_size', type=int, default=64)
     parser.add_argument('--performance_plot_path', dest='performance_plot_path', type=str, default='./figure/perfplot.png')
     parser.add_argument('--performance_plot_interval', dest='performance_plot_interval', type=int, default=100)
-    parser.add_argument('--performance_plot_episodes', dest='performance_plot_episodes', type=int, default=20)
+    parser.add_argument('--performance_plot_episodes', dest='performance_plot_episodes', type=int, default=100)
     parser.add_argument('--reuse_model', dest='reuse_model', type=int, default=1)
     parser.add_argument('--use_monitor', dest='use_monitor', type=int, default=0)
 

@@ -27,37 +27,26 @@ class DeepQN(object):
                                 name='s')
 
         self.a = tf.placeholder(dtype=tf.int32,
-                                shape=None,
+                                shape=[None],
                                 name='a')
 
         self.r = tf.placeholder(dtype=tf.float32,
                                 shape=[None],
                                 name='r')
 
-        self.q = self.core_graph(self.s, type=type)
-        self.q_ = tf.placeholder(dtype=tf.float32,
-                                 shape=[None],
-                                 name='q_')
+        if self.type == 'v1':
+            self.q = tf.layers.dense(inputs=self.s,
+                               units=self.num_actions,
+                               activation=None,
+                               use_bias=True,
+                               kernel_initializer=tf.keras.initializers.glorot_uniform(),
+                               bias_initializer=tf.zeros_initializer(),
+                               trainable=True,
+                               name='core_graph_q',
+                               reuse=None)
 
-        a_indices = tf.stack([tf.range(tf.shape(self.a)[0], dtype=tf.int32), self.a], axis=1)
-
-        self.estimate = tf.gather_nd(params=self.q, indices=a_indices)  # shape=(None, )
-
-        target = gamma * self.q_ + self.r
-
-        self.target = tf.stop_gradient(target)
-
-        self.loss = tf.reduce_mean(tf.squared_difference(self.target, self.estimate))
-        return
-
-    def core_graph(self, s, type='v3'):
-        h_last = None
-
-        if type == 'v1':
-            h_last = s
-
-        if type == 'v3':
-            h1 = tf.layers.dense(inputs=s,
+        if self.type == 'v3':
+            self.h1 = tf.layers.dense(inputs=self.s,
                                  units=24,
                                  activation=tf.nn.tanh,
                                  use_bias=True,
@@ -65,20 +54,30 @@ class DeepQN(object):
                                  bias_initializer=tf.zeros_initializer(),
                                  name='core_graph_h1',
                                  trainable=True,
-                                 reuse=tf.AUTO_REUSE)
+                                 reuse=None)
 
-            h_last = tf.layers.dense(inputs=h1,
+            self.h_last = tf.layers.dense(inputs=self.h1,
                                      units=48,
                                      activation=tf.nn.tanh,
                                      use_bias=True,
                                      kernel_initializer=tf.keras.initializers.glorot_uniform(),
                                      bias_initializer=tf.zeros_initializer(),
-                                     name='core_graph_h2',
+                                     name='core_graph_h_last',
                                      trainable=True,
-                                     reuse=tf.AUTO_REUSE)
+                                     reuse=None)
 
-        if type == 'v4':
-            s_trans = tf.transpose(s, [0, 2, 3, 1])
+            self.q = tf.layers.dense(inputs=self.h_last,
+                               units=self.num_actions,
+                               activation=None,
+                               use_bias=True,
+                               kernel_initializer=tf.keras.initializers.glorot_uniform(),
+                               bias_initializer=tf.zeros_initializer(),
+                               trainable=True,
+                               name='core_graph_q',
+                               reuse=None)
+
+        if self.type == 'v4':
+            s_trans = tf.transpose(self.s, [0, 2, 3, 1])
             h1 = tf.layers.conv2d(
                 inputs=s_trans,
                 filters=16,
@@ -87,7 +86,7 @@ class DeepQN(object):
                 padding="same",
                 activation=tf.nn.relu,
                 data_format='channels_last',
-                name='h1')
+                name='core_graph_h1')
             h2 = tf.layers.conv2d(
                 inputs=h1,
                 filters=32,
@@ -104,7 +103,7 @@ class DeepQN(object):
             )
 
             # dense layer automatically make the inputs flattened
-            h_last = tf.layers.dense(
+            self.h_last = tf.layers.dense(
                 inputs=h3,
                 units=256,
                 activation=tf.nn.relu,
@@ -118,9 +117,19 @@ class DeepQN(object):
                 name='core_graph_h_last'
             )
 
+            self.q = tf.layers.dense(inputs=self.h_last,
+                               units=self.num_actions,
+                               activation=None,
+                               use_bias=True,
+                               kernel_initializer=tf.keras.initializers.glorot_uniform(),
+                               bias_initializer=tf.zeros_initializer(),
+                               trainable=True,
+                               name='core_graph_q',
+                               reuse=None)
+
         # dualing network
-        if type == 'v5':
-            h1 = tf.layers.dense(inputs=s,
+        if self.type == 'v5':
+            h1 = tf.layers.dense(inputs=self.s,
                                  units=24,
                                  activation=tf.nn.tanh,
                                  use_bias=True,
@@ -165,18 +174,22 @@ class DeepQN(object):
                                    name='core_graph_h3_a',
                                    trainable=True)
 
-            return h3_v + h3_a
+            self.q = h3_v + h3_a
 
-        return tf.layers.dense(inputs=h_last,
-                               units=self.num_actions,
-                               activation=None,
-                               use_bias=True,
-                               kernel_initializer=tf.keras.initializers.glorot_uniform(),
-                               bias_initializer=tf.zeros_initializer(),
-                               trainable=True,
-                               name='core_graph_q',
-                               reuse=tf.AUTO_REUSE)
+        self.q_ = tf.placeholder(dtype=tf.float32,
+                                 shape=[None],
+                                 name='q_')
 
+        a_indices = tf.stack([tf.range(tf.shape(self.a)[0], dtype=tf.int32), self.a], axis=1)
+
+        self.estimate = tf.gather_nd(params=self.q, indices=a_indices)  # shape=(None, )
+
+        target = gamma * self.q_ + self.r
+
+        self.target = tf.stop_gradient(target)
+
+        self.loss = tf.reduce_mean(tf.squared_difference(self.target, self.estimate))
+        return
 
     def reset_sess(self, sess):
         self.sess = sess

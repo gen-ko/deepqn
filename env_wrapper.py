@@ -6,10 +6,10 @@ from utils import image_prep
 from gym import wrappers
 
 class EnvWrapper(object):
-    def __init__(self, args, mod_r=False):
-        self.env_name = args.env
-        if args.use_monitor:
-            self.env = wrappers.Monitor(gym.make(self.env_name), 'tmp/{}_{}_record'.format(args.env, args.qnum), force=True)
+    def __init__(self, env_name, use_monitor=False, mod_r=False):
+        self.env_name = env_name
+        if use_monitor:
+            self.env = wrappers.Monitor(gym.make(self.env_name), 'tmp/{}_{}_record'.format(env_name, 3), force=True)
         else:
             self.env = gym.make(self.env_name)
         self.num_actions = self.env.action_space.n
@@ -53,13 +53,15 @@ class EnvWrapper(object):
     def step_mountain_car(self, a):
         si, r, done, _ = self.env.step(a)
 
-        h = np.sin(3 * si[0]) * 0.45 + 0.55
+        x = si[0]
 
-        v = self.si[1]
+        v = si[1]
 
-        v_update = np.cos(3 * v) * (-0.0025)
+        h = np.sin(3 * x) * 0.45 + 0.55
 
-        r_update = (si[1] - self.si[1] - v_update) * np.sign(si[1]) * 800.0
+        v_update = np.cos(3 * self.x) * (-0.0025)
+
+        r_update = (v - self.v - v_update) * np.sign(v) * 800
 
         if abs(si[1]) >= 0.07:
             r_update = 0.8
@@ -70,9 +72,13 @@ class EnvWrapper(object):
         else:
             r += r_update
 
-        self.si = si
+        self.v = v
+
+        self.x = x
         return si, r, done, {}
 
     def reset_mountain_car(self):
-        self.si = self.env.reset()
-        return self.si
+        si = self.env.reset()
+        self.x = si[0]
+        self.v = si[1]
+        return si

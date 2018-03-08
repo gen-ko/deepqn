@@ -7,7 +7,7 @@ TF_FLOAT_TYPE = tf.float32
 TF_INT_TYPE = tf.int32
 
 class MemoryReplayer(object):
-    def __init__(self, state_shape, capacity: int=100000, enabled=False):
+    def __init__(self, state_shape, capacity: int=100000, enabled=True):
         self.capacity = capacity
         self.state_shape = state_shape
         self.state_ndim = len(self.state_shape)
@@ -38,6 +38,7 @@ class MemoryReplayer(object):
             self.mem_counter = (self.mem_counter + 1) % self.capacity
             if self.used_counter < self.capacity:
                 self.used_counter += 1
+            return
         else:
             if self.reset_flag:
                 self.mem_counter = 0
@@ -53,8 +54,7 @@ class MemoryReplayer(object):
                 self.used_counter += 1
             if done:
                 self.reset_flag = True
-
-
+            return
 
     def replay(self, batch_size):
         batch_idx = np.random.randint(low=0, high=self.used_counter, size=min(batch_size, self.used_counter), dtype=np.int32)
