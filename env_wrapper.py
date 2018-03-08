@@ -75,6 +75,8 @@ class EnvWrapper(object):
         self.v = v
 
         self.x = x
+        if x >= 0.5:
+            r += 1000000
         return si, r, done, {}
 
     def reset_mountain_car(self):
