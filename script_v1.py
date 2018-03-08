@@ -13,6 +13,8 @@ from collections import deque
 import copy
 from env_wrapper import EnvWrapper
 import utils
+import pickle
+import os
 
 
 def train(args=None):
@@ -24,15 +26,22 @@ def train(args=None):
     env = EnvWrapper(args.env, mod_r=True)
     env_test = EnvWrapper(args.env, mod_r=False)
 
+
     if args.use_mr:
         print('Set experience replay ON')
     else:
         print('Set experience replay OFF')
 
-    mr = MemoryReplayer(env.state_shape, capacity=args.mr_capacity, enabled=args.use_mr)
 
-    # burn_in
-    mr = utils.burn_in(env, mr)
+    path = './tmp/burn_in_' + args.env + '-' + str(args.mr_capacity) + '.pickle'
+    if os.path.exists(path):
+        print('Found existing burn_in memory replayer, load...')
+        with open(path, 'rb') as f:
+            mr = pickle.load(file=f)
+    else:
+        mr = MemoryReplayer(env.state_shape, capacity=args.mr_capacity, enabled=args.use_mr)
+        # burn_in
+        mr = utils.burn_in(env, mr)
 
 
     # set type='v1' for linear model, 'v3' for three layer model (two tanh activations)
@@ -110,6 +119,10 @@ def train(args=None):
                 # reward_record.append(r_avg)
     except KeyboardInterrupt:
         qn.save('./tmp/qn-' + args.qn_version + '-' + args.env + '-keyinterrupt' + '.ckpt')
+        # save mr
+
+        with open(path, 'wb+') as f:
+            pickle.dump(mr, f)
         exit(-1)
 
 
@@ -140,12 +153,12 @@ def get_eps(t):
 
 def parse_arguments():
     parser = argparse.ArgumentParser(description='Deep Q Network Argument Parser')
-    parser.add_argument('--env',dest='env',type=str, default='CartPole-v0')
+    parser.add_argument('--env',dest='env',type=str, default='MountainCar-v0')
     parser.add_argument('--render',dest='render',type=int,default=0)
     parser.add_argument('--train',dest='train',type=int,default=1)
     parser.add_argument('--model_path',dest='model_path',type=str, default='./tmp/blabla.ckpt')
     parser.add_argument('--use_mr', dest='use_mr', type=int, default=1)
-    parser.add_argument('--mr_capacity', dest='mr_capacity', type=int, default=50000)
+    parser.add_argument('--mr_capacity', dest='mr_capacity', type=int, default=5000)
     parser.add_argument('--gamma', dest='gamma', type=float, default=0.99)
     parser.add_argument('--qn_version', dest='qn_version', type=str, default='v3')
     parser.add_argument('--learning_rate', dest='lr', type=float, default=0.008)
