@@ -2,9 +2,9 @@ from setuptools import setup
 from setuptools import find_packages
 
 setup(name='deepqn',
-      version='0.0.1',
+      version='0.0.2',
       description='A DQN implementation',
-      url='https://github.com/linthieda/dqn',
+      url='https://github.com/linthieda/deepqn',
       author='Yuan Liu',
       author_email='linthieda@gmail.com',
       license='MIT',

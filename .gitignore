@@ -101,3 +101,10 @@ log
 pt/
 *.png
 final/
+.DS_Store
+.idea/modules.xml
+.idea/vcs.xml
+.idea/libraries/R_User_Library.xml
+.idea/DQN.iml
+.idea/misc.xml
+.idea/workspace.xml
