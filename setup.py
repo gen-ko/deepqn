@@ -1,11 +1,13 @@
 from setuptools import setup
+from setuptools import find_packages
 
-setup(name='dqn',
-      version='0.1',
-      description='DQN implementation',
+setup(name='deepqn',
+      version='0.0.1',
+      description='A DQN implementation',
       url='https://github.com/linthieda/dqn',
       author='Yuan Liu',
       author_email='linthieda@gmail.com',
       license='MIT',
-      packages=['dqn'],
+      packages=find_packages(exclude=['contrib', 'docs', 'tests*']),
+      python_requires='>=3.6',
       zip_safe=False)
